@@ -1,0 +1,162 @@
+import type { PracticeSlug } from "./aurelius-services";
+import type { HeroFigure } from "./types";
+
+/**
+ * Home page copy, section by section (docs/website-blueprint.md §4). Lines come from the
+ * Kreatif Atelier profile and the blueprint; anything marked `placeholder` must be replaced
+ * with approved content before launch.
+ */
+
+/** The home hero: the owner's galloping horse, full-bleed. The Aurelius page uses the same picture. */
+export const heroFigure: HeroFigure = {
+  src: "/reference/aurelius-horse.webp",
+  alt: "A dark horse at full gallop, its mane streaming behind it, against burning red",
+  width: 1672,
+  height: 941,
+  mode: "full",
+  front: "/reference/aurelius-horse-front.webp",
+};
+
+export const hero = {
+  id: "home",
+  primaryCta: { label: "Explore Aurelius", href: "/aurelius" },
+  secondaryCta: { label: "View all services", href: "/aurelius/services" },
+  /** The hero's quote (owner, 2026-10-20). The last two words are set in gold. */
+  quote: "We make brands impossible to ignore.",
+  scrollCue: "Scroll",
+  /** The two small word lists in the hero's top corners. */
+  words: { start: ["Strategy", "Creative", "Media", "Technology"], end: ["Ideas", "Brands", "Audiences", "Impact"] },
+} as const;
+
+export const positioning = {
+  id: "positioning",
+  marker: "Positioning",
+  headline: { lead: "Creative should", emphasis: "move the business." },
+  body: [
+    "Most agencies pick a side. We were built to hold both ends.",
+    "Some make beautiful things nobody can trace to revenue. Others run efficient media against creative they did not build and cannot fix. The gap between those two is where most marketing budgets quietly disappear.",
+  ],
+} as const;
+
+export const capabilities: {
+  id: string;
+  marker: string;
+  headline: { lead: string; emphasis: string };
+  entries: { label: string; slug: PracticeSlug }[];
+} = {
+  id: "capabilities",
+  marker: "Capabilities",
+  headline: { lead: "Capabilities", emphasis: "at a glance." },
+  entries: [
+    { label: "Brand & Creative", slug: "branding-creative-design" },
+    { label: "Digital Marketing", slug: "digital-marketing" },
+    { label: "Advertising & Media", slug: "advertising" },
+    { label: "SEO & Organic Discovery", slug: "seo" },
+    { label: "Lead Generation & Growth", slug: "lead-generation-growth" },
+    { label: "Analytics & Performance", slug: "analytics-performance" },
+  ],
+};
+
+export const attention = {
+  id: "attention",
+  marker: "Attention",
+  headline: { lead: "Attention is bought, earned and kept", emphasis: "in different ways." },
+  body: "A brand's buyers are not sitting in one channel waiting to be found. They scroll, search, open email, ask a colleague and compare on marketplaces.",
+  modes: [
+    { title: "Own", body: "Audiences you build." },
+    { title: "Buy", body: "Demand you can capture." },
+    { title: "Keep", body: "Customers and long-term value you already have." },
+  ],
+  closing: "We run all three.",
+  kicker: "Show up where the buyer is.",
+} as const;
+
+export const work = {
+  id: "work",
+  marker: "Selected Work",
+  headline: { lead: "The work,", emphasis: "the way it actually looks." },
+  /** Placeholder: no approved case studies have been supplied yet. Never fill this with invented work. */
+  placeholder: "Placeholder — approved case studies will appear here.",
+  cta: { label: "View Selected Work", href: "/work" },
+} as const;
+
+export const measurement = {
+  id: "measurement",
+  marker: "Measurement",
+  line: ["Measure", "Understand", "Redirect"],
+  body: ["Most reporting exists to justify spend. Ours exists to redirect it.", "Opinions are free. Evidence costs money and saves more."],
+  loop: ["Analytics", "Learning", "Creative / media change", "Re-measurement"],
+  cta: { label: "Our Approach", href: "/approach" },
+} as const;
+
+export const ventures = {
+  id: "ventures",
+  marker: "Our Ventures",
+  headline: { lead: "Our", emphasis: "ventures." },
+  explore: "Explore",
+} as const;
+
+/**
+ * Where Aurelius's clients are (owner, 2026-10-20: "we serve clients in 3 timezones", Vancouver, the UAE and
+ * India), on the relief map. Positions are percentages of world-relief.svg: x = 50 + 0.27 × longitude,
+ * y = 52.93 − 0.5274 × latitude (fitted to the map's projection).
+ */
+export const clients = {
+  id: "clients",
+  marker: "Where our clients are",
+  headline: { lead: "We work across", emphasis: "3 timezones." },
+  /** A still render of world-relief.svg (its 32 blur filters are too costly to draw live while scrolling). */
+  map: { src: "/images/graphics/world-relief-1200.webp", srcLarge: "/images/graphics/world-relief-2400.webp", width: 1200, height: 615, alt: "A relief map of the world marking Vancouver, the UAE and India" },
+  places: [
+    { country: "Canada", city: "Vancouver", utc: "UTC−8", note: "UTC−7 in summer", x: 16.76, y: 26.94, label: "right" },
+    { country: "UAE", city: "Dubai", utc: "UTC+4", x: 64.92, y: 39.64, label: "left" },
+    { country: "India", city: "Hyderabad", utc: "UTC+5:30", x: 71.19, y: 43.76, label: "right", home: true },
+  ],
+} as const;
+
+export const parent = {
+  id: "kreatif-atelier",
+  marker: "Kreatif Atelier",
+  body: "Kreatif Atelier is a creative holding ecosystem connecting people, ideas and complementary disciplines to create meaningful opportunities and lasting impact.",
+  line: ["Ideas", "People", "Impact"],
+  cta: { label: "About Kreatif Atelier", href: "/about/kreatif-atelier" },
+  /** The owner's crest for the parent company, as embroidered artwork. Shown only by the footer's hidden door (components/footer/CrestEgg.tsx). */
+  crest: {
+    src: "/images/logos/kreatif-atelier-crest.webp",
+    width: 1672,
+    height: 941,
+    alt: "The Kreatif Atelier crest in embroidery: a crowned eagle bearing a KA shield, above a KA monogram and the words Create, Design, Inspire",
+    /** The verticals shown on the cloth beneath the crest, in order. Slugs from content/verticals.ts. */
+    /** The red eagle crest the owner supplied, shown small on the footer's hidden door. */
+    eagle: { src: "/images/logos/ka-eagle-crest.webp", width: 453, height: 479 },
+    verticals: ["aurelius", "asraya", "valora", "golden-guardian-productions", "rudra-yugen"],
+  },
+} as const;
+
+export const contactCta = {
+  id: "contact",
+  headline: { lead: "Have a business challenge?", emphasis: "Let's make the work land." },
+  body: "Tell us your goal, what you have tried and what you need help solving.",
+  cta: { label: "Start a Project", href: "/contact" },
+} as const;
+
+/**
+ * The film-reel band under the home hero: two strips of film, text only, moving in opposite
+ * directions. Service names as supplied by the owner (2026-10-20); each `lines` entry is how the
+ * name breaks inside its frame.
+ */
+export const filmReel = {
+  id: "what-we-create",
+  eyebrow: "What we create",
+  headline: { lead: "Ideas", emphasis: "in motion." },
+  services: [
+    { name: "Brand Strategy", lines: ["Brand", "Strategy"] },
+    { name: "Social Media Management", lines: ["Social Media", "Management"] },
+    { name: "Content Creation", lines: ["Content", "Creation"] },
+    { name: "Graphic Design", lines: ["Graphic", "Design"] },
+    { name: "Website Development", lines: ["Website", "Development"] },
+    { name: "Performance Marketing", lines: ["Performance", "Marketing"] },
+    { name: "Photography & Videography", lines: ["Photography &", "Videography"] },
+    { name: "Creative Consulting", lines: ["Creative", "Consulting"] },
+  ],
+} as const;

@@ -1,0 +1,3876 @@
+@import "tailwindcss";
+/* The revamp design system: tokens (single source of truth) and the materials built from them. */
+@import "../styles/design/tokens.css";
+@import "../styles/design/materials.css";
+/* The Aurelius maroon-and-gold theme, applied only inside .theme-aurelius. */
+@import "../styles/design/aurelius-theme.css";
+@import "../styles/design/aurelius-hero.css";
+@import "../styles/design/cart.css";
+@import "../styles/design/buttons.css";
+@import "../styles/design/timezones.css";
+@import "../styles/design/footer.css";
+@import "../styles/design/stepwire.css";
+
+/* Pinned-section layout (Services, Process). Keep in sync with config.pin.query in lib/config.ts.
+   `pin-short` tightens the pinned layout for short laptop screens (e.g. 1366×768 → ~620–700px visible). */
+@custom-variant pin (@media (min-width: 1024px) and (min-height: 620px) and (prefers-reduced-motion: no-preference));
+@custom-variant pin-short (@media (min-width: 1024px) and (min-height: 620px) and (max-height: 759.98px) and (prefers-reduced-motion: no-preference));
+
+/* ── Brand tokens ─────────────────────────────────────────── */
+:root {
+  /* The site is white (2026-10-13). The token names keep their first meaning by role, not by colour:
+     `--ink` is the page surface and `--cream` is the type on it, so every component that was written
+     as "cream on ink" now reads dark on white. `.classic` (below) restores the first, dark palette
+     for the few places that are still dark or were always light: hero, footer, the paper sections. */
+  /* Neumorphic site (2026-10-20): the surface and type come from styles/design/tokens.css. */
+  --ink: var(--ds-surface);
+  --navy: var(--ds-surface-raised);
+  --gold: #2a5bc4;
+  --gold-bright: var(--ds-navy);
+  --bronze: #8c7a52;
+  /* Bronze dark enough for small text on cream. */
+  --bronze-deep: #6b4f2c;
+  --cream: var(--ds-text);
+  --forest: #24483a;
+  --vermilion: #c9513d;
+  --teal: #28565b;
+  --crimson: #7a1e2b;
+  --mahogany: #440000;
+  --emerald: #1d4a37;
+
+  --cream-muted: var(--ds-text-muted);
+  --cream-faint: var(--ds-text-subtle);
+  --line: rgb(var(--ds-shadow-tint) / 0.12);
+  --panel: rgb(236 238 243 / 0.7);
+  /* Per-page accent (vertical pages override it). */
+  --accent: var(--gold);
+
+  --gutter: clamp(1rem, 4vw, 3.5rem);
+  --nav-h: 4.5rem;
+
+  color-scheme: light;
+}
+
+/* The first palette: obsidian surfaces, ivory type, champagne lines. */
+.classic,
+footer,
+.hist,
+.hist-gallery,
+.asraya,
+.crest-egg {
+  --ink: #111210;
+  --navy: #1b1c19;
+  --gold: #cdb98a;
+  --gold-bright: #eadcb9;
+  --cream: #f3f0e9;
+  --cream-muted: rgb(243 240 233 / 0.72);
+  --cream-faint: rgb(243 240 233 / 0.5);
+  --line: rgb(205 184 138 / 0.22);
+  --panel: rgb(22 22 22 / 0.5);
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-navy: var(--navy);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-bronze: var(--bronze);
+  --color-bronze-deep: var(--bronze-deep);
+  --color-cream: var(--cream);
+  --color-cream-muted: var(--cream-muted);
+  --color-cream-faint: var(--cream-faint);
+  --color-crimson: var(--crimson);
+  --color-forest: var(--forest);
+  --color-vermilion: var(--vermilion);
+  --color-teal: var(--teal);
+  --color-mahogany: var(--mahogany);
+  --color-emerald: var(--emerald);
+  --color-accent: var(--accent);
+  --color-line: var(--line);
+  --color-panel: var(--panel);
+
+  --font-display: var(--font-cormorant);
+  --font-price: var(--font-rupee), var(--font-cormorant);
+  --font-sans: var(--font-manrope);
+}
+
+/* ── Base ─────────────────────────────────────────────────── */
+@layer base {
+html {
+  /* Clip sideways overflow at the root: a clip on <body> does not reach the viewport, so the
+     footer's wide sunset arc made every page scroll 27px sideways on a 320px phone (break-ui). */
+  overflow-x: clip;
+  background: var(--ink);
+  scroll-padding-top: var(--nav-h);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+/* Anchor targets get focus programmatically (tabindex="-1"); no ring on whole sections. */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* Visible focus for every interactive element */
+:focus-visible {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+}
+
+/* ── Atmosphere (static backdrop; the WebGL canvas sits above this later) ── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--ink);
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@layer components {
+/* ── Type helpers ─────────────────────────────────────────── */
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.02;
+  font-variant-numeric: lining-nums;
+}
+
+.emph {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--gold-bright);
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.gold-text {
+  background: linear-gradient(100deg, var(--bronze) 0%, var(--gold) 28%, var(--gold-bright) 50%, var(--gold) 72%, var(--bronze) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── Panels ───────────────────────────────────────────────── */
+.panel {
+  background: linear-gradient(160deg, rgb(26 26 26 / 0.7), rgb(8 8 8 / 0.7));
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+
+/* SplitText line masks (headline reveals): room for italic overhangs and descenders, layout unchanged. */
+.reveal-line-mask {
+  padding: 0.06em 0.12em 0.18em;
+  margin: -0.06em -0.12em -0.18em;
+}
+
+.hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.5;
+}
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Front page ───────────────────────────────────────────── */
+/* Hero stage: `--hero-stage` viewport heights tall (config.front.hero.stageVh); the extra is the sticky hold. */
+.hero-stage {
+  height: calc(var(--hero-stage, 100) * 1svh);
+}
+
+/* Full-bleed hero: the picture's foot and top sink into the mahogany, under the title and the header. */
+/* Full hero (the horse). Everything is sized from the screen's width, so the picture and the word
+   keep their places against each other on any screen: the muzzle always meets the top of the letters.
+   --k is the picture's width in vw; 0.218 / 0.374 is where the muzzle sits in the picture. */
+.hero-horse {
+  --k: 300;
+  --word: 16.2vw;
+  /* Narrow screens lift the word and the horse off the foot of the screen, so the picture fills more of it. */
+  --lift: 16svh;
+  position: absolute;
+  bottom: calc(var(--lift) + var(--word) - var(--k) * 0.5628vw * 0.626);
+  left: calc(47vw - var(--k) * 0.218vw);
+  width: calc(var(--k) * 1vw);
+  aspect-ratio: 1672 / 941;
+  transform-origin: 21.8% 37.4%;
+  /* The picture's own edges dissolve into the mahogany. */
+  mask-image: linear-gradient(to bottom, transparent, #000 26%), linear-gradient(to right, transparent, #000 13%);
+  mask-composite: intersect;
+}
+
+.hero-horse--front {
+  z-index: 3;
+  mask-image: none;
+}
+
+.hero-horse img {
+  width: 100%;
+  height: 100%;
+}
+
+.hero-full__shade {
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgb(40 0 0 / 0.5), transparent 20%);
+}
+
+/* The word: one line, edge to edge, its feet just below the screen. */
+.hero-word {
+  position: absolute;
+  bottom: calc(16svh + 2.7vw);
+  /* Centred by its box, not by a translate: the scroll animation owns its transform. */
+  inset-inline: 0;
+  z-index: 2;
+  text-align: center;
+  font-family: var(--font-abril), Didot, "Bodoni MT", Georgia, serif;
+  font-size: 20.5vw;
+  font-weight: 400;
+  line-height: 0.74;
+  letter-spacing: -0.012em;
+  white-space: nowrap;
+  text-transform: uppercase;
+  color: var(--cream);
+}
+
+/* The Aurelius horse, between the two word lists; the black mark is turned to ivory. */
+.hero-emblem {
+  position: absolute;
+  top: calc(var(--nav-h) + 1.5rem);
+  left: 50%;
+  z-index: 4;
+  width: clamp(3rem, 5vw, 4.5rem);
+  height: auto;
+  translate: -50% 0;
+  filter: invert(1) sepia(0.25) brightness(0.95);
+  opacity: 0.9;
+}
+
+.hero-words {
+  position: absolute;
+  top: calc(var(--nav-h) + 1.75rem);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-bottom: 1.1rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.34em;
+  color: var(--cream);
+}
+
+.hero-words::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 3rem;
+  height: 1px;
+  background: rgb(243 240 233 / 0.6);
+}
+
+.hero-words li:nth-child(even) {
+  opacity: 0.5;
+}
+
+.hero-words--start {
+  left: var(--gutter);
+}
+
+.hero-words--end {
+  right: var(--gutter);
+}
+
+.hero-byline {
+  position: absolute;
+  top: calc(var(--nav-h) + 9.2rem);
+  left: var(--gutter);
+  z-index: 4;
+  font-size: 0.54rem;
+  letter-spacing: 0.3em;
+  color: rgb(243 240 233 / 0.7);
+}
+
+/* Home only: the line and the two buttons, in the open red to the horse's left. */
+.hero-copy {
+  position: absolute;
+  top: calc(var(--nav-h) + 12rem);
+  left: var(--gutter);
+  z-index: 4;
+  width: min(30rem, calc(100vw - 2 * var(--gutter)));
+}
+
+@media (min-width: 1024px) {
+  .hero-word {
+    bottom: 2.7vw;
+  }
+
+  .hero-horse {
+    --k: 128;
+    --lift: 0svh;
+  }
+
+  .hero-copy {
+    top: auto;
+    bottom: calc(18.6vw + 2.25rem);
+    width: min(30rem, 32vw);
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 780px) {
+  .hero-copy__support {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-stage {
+    height: 100svh;
+  }
+}
+
+/* The light block: the canvas paints the page colour (and the dark that rises at its end) once it
+   is running; until then, and without WebGL, the block carries its own colour and a plain fade-out. */
+.light-block {
+  position: relative;
+  background: var(--cream);
+  color: var(--ink);
+}
+
+.light-block::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 46vh;
+  pointer-events: none;
+  background: linear-gradient(to top, var(--ink), #5e1322 22%, #c2551a 45%, #eda02f 66%, #f6d488 84%, var(--cream));
+}
+
+html[data-scene-ready] .light-block {
+  background: transparent;
+}
+
+html[data-scene-ready] .light-block::after {
+  display: none;
+}
+
+/* Outlined numeral behind a vertical's typographic hero. */
+.outline-numeral {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--line);
+}
+
+
+/* ── Shared pieces ────────────────────────────────────────── */
+/* One button for every action: a raised neumorphic pill that presses in (emil-design-eng: 0.97 press,
+   ease-out, hover only on devices that hover). Faces and shadows come from styles/design/tokens.css. */
+.btn {
+  display: inline-flex;
+  min-height: var(--ds-tap);
+  align-items: center;
+  gap: var(--ds-space-3);
+  padding: 0 var(--ds-space-6);
+  border-radius: var(--ds-radius-pill);
+  font-family: var(--ds-font-text);
+  font-size: var(--ds-text-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  /* Long labels wrap rather than run off narrow screens or 200% text (break-ui). */
+  max-width: 100%;
+  white-space: normal;
+  text-wrap: balance;
+  color: var(--btn-ink, var(--ds-text));
+  background: var(--btn-face, var(--ds-surface-raised));
+  box-shadow: var(--btn-shadows, var(--neu-raised-sm));
+  transition:
+    transform var(--ds-dur-press) var(--ds-ease-out),
+    box-shadow var(--ds-dur-fast) var(--ds-ease-out),
+    color var(--ds-dur-fast) var(--ds-ease-out);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+@media (hover: hover) {
+  .btn:hover {
+    color: var(--btn-ink-hover, var(--ds-blue));
+  }
+  .btn:hover > .btn-arrow {
+    transform: translateX(3px);
+  }
+}
+.btn:active {
+  transform: scale(var(--ds-press-scale));
+  box-shadow: var(--btn-pressed, var(--neu-pressed-sm));
+}
+.btn:focus-visible {
+  outline: 2px solid var(--ds-focus);
+  outline-offset: 4px;
+}
+.btn > .btn-arrow {
+  transition: transform var(--ds-dur-fast) var(--ds-ease-out);
+}
+.btn-primary {
+  --btn-ink: var(--ds-text-on-accent);
+  --btn-ink-hover: var(--ds-text-on-accent);
+  --btn-face: var(--ds-navy);
+  --btn-shadows: 10px 10px 22px rgb(var(--ds-shadow-tint) / 0.32), -8px -8px 18px rgb(var(--ds-light) / 0.9);
+  --btn-pressed: inset 6px 6px 12px rgb(0 0 0 / 0.3), inset -4px -4px 10px rgb(var(--ds-light) / 0.12);
+}
+
+/* On the few dark surfaces left (footer, Valora radar, history gallery) the button is glass. */
+.on-dark .btn,
+.classic .btn {
+  --btn-ink: #f3f0e9;
+  --btn-ink-hover: #ffffff;
+  --btn-face: linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.03));
+  --btn-shadows: inset 0 1px 0 rgb(255 255 255 / 0.16), 0 8px 18px -8px rgb(0 0 0 / 0.7);
+  --btn-pressed: inset 0 2px 5px rgb(0 0 0 / 0.35);
+}
+.on-dark .btn-primary,
+.classic .btn-primary {
+  --btn-ink: #111210;
+  --btn-ink-hover: #111210;
+  --btn-face: linear-gradient(180deg, #f8f5ee, #dcd6c8);
+}
+
+/* Neutral stand-in for artwork the owner will supply: a pressed well. */
+.placeholder {
+  display: grid;
+  place-items: center;
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-surface-sunken);
+  box-shadow: var(--neu-pressed-md);
+  color: var(--ds-text-subtle);
+  font-family: var(--ds-font-text);
+  font-size: var(--ds-text-xs);
+  font-weight: 700;
+  letter-spacing: var(--ds-tracking-label);
+  text-transform: uppercase;
+  text-align: center;
+  padding: var(--ds-space-4);
+}
+.classic .placeholder {
+  background: transparent;
+  box-shadow: none;
+  border: 1px dashed var(--line);
+  color: var(--cream-faint);
+}
+
+/* ── Aurelius page system ─────────────────────────────────── */
+/* One accent for labels, numerals and rules: vermilion, from the blueprint palette. Flip it here. */
+:root {
+  --ember: #c9513d;
+}
+
+@theme inline {
+  --color-ember: var(--ember);
+}
+
+/* The arc sits in the light section only where the dome is wired to the scene (home). */
+.light-block[data-dome]::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 46vh;
+  pointer-events: none;
+  background: linear-gradient(to top, var(--ink), #5e1322 22%, #c2551a 45%, #eda02f 66%, #f6d488 84%, var(--cream));
+}
+
+html[data-scene-ready] .light-block[data-dome]::after {
+  display: none;
+}
+
+/* ── Headlines: the Asraya profile's poster face, site-wide (2026-10-13) ───── */
+/* Main headings are set in condensed capitals; the italic half of a split headline stays in the serif. */
+h1.display,
+h2.display {
+  font-family: var(--font-anton), Impact, "Arial Narrow Bold", sans-serif;
+  font-weight: 400 !important;
+  line-height: 0.96;
+  letter-spacing: 0.012em;
+  text-transform: uppercase;
+}
+
+h1.display .italic,
+h2.display .italic,
+h1.display em,
+h2.display em {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+/* ── Brand marks from the visiting card ─────────────────────── */
+.brand-mask {
+  display: inline-block;
+  flex: none;
+  background: currentColor;
+  mask: center / contain no-repeat;
+}
+
+.brand-mask--monogram {
+  aspect-ratio: 700 / 672;
+  mask-image: url("/images/logos/ka-monogram.webp");
+}
+
+.brand-mask--wordmark {
+  aspect-ratio: 1800 / 247;
+  mask-image: url("/images/logos/ka-wordmark.webp");
+}
+
+/* The card itself: dark mahogany, the monogram glowing faintly behind the gold script. */
+.ka-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #200606, #370b0b);
+  color: #f3f0e9;
+}
+
+.ka-card__mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding-block: clamp(3rem, 9vw, 7rem);
+}
+
+.ka-card__monogram {
+  width: clamp(9rem, 30vw, 22rem);
+  color: rgb(168 112 98 / 0.32);
+  filter: drop-shadow(0 0 18px rgb(214 140 110 / 0.18));
+}
+
+.ka-card__wordmark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(86%, 56rem);
+  translate: -50% -42%;
+  color: #d4b27a;
+}
+
+/* ── Sunset under the hero ───────────────────────────────── */
+.sunset-edge {
+  --depth: 92%;
+  position: relative;
+  height: clamp(14rem, 44svh, 30rem);
+  margin-top: -1px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 64% var(--depth) at 50% 0%, #1c0404 0 54%, #5e0c0c 62%, #d2261a 67%, #f2671d 72%, #ffb53a 78%, #ffe6a8 85%, rgb(255 255 255 / 0) 93%),
+    #fff;
+}
+
+/* Film grain over the glow, as in the reference. */
+.sunset-edge::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 1.2 -.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+
+/* ── Graphic assets ───────────────────────────────────────── */
+/* Contour lines: a mask, so they take whatever colour the element has. Decorative. */
+.topo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: currentColor;
+  mask: url("/images/graphics/topo-hills.svg") center / cover no-repeat;
+}
+
+.topo--ridge {
+  mask-image: url("/images/graphics/topo-ridge.svg");
+}
+
+/* Fades toward the reading side, so lines never run under body text at full strength. */
+.topo--fade-left {
+  mask-image: url("/images/graphics/topo-hills.svg"), linear-gradient(to right, transparent 28%, #000 78%);
+  mask-size: cover, 100% 100%;
+  mask-composite: intersect;
+}
+
+/* Grainy heat: two soft bursts of ivory, amber and vermilion on black, under film grain. */
+.heat {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(62% 46% at 22% 8%, #fff6dc 0%, #f4c257 20%, #e2491c 42%, rgb(226 73 28 / 0) 66%),
+    radial-gradient(70% 52% at 84% 98%, #fff6dc 0%, #f2a43a 22%, #d9351c 44%, rgb(217 53 28 / 0) 68%),
+    #0b0908;
+  color: #f3f0e9;
+}
+
+.heat::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.55;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 1.4 -.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+/* ── /aurelius/history: the timeline infographic ─────────────── */
+/* A strip of torn pictures down the middle of a paper page, an era's story on one side and its dates
+   on the other, swapping sides each time. Type, labels and buttons are the site's own. */
+.hist {
+  --hist-paper: #f4f1e9;
+  --hist-rule: rgb(17 18 16 / 0.2);
+  --hist-soft: rgb(17 18 16 / 0.74);
+  --hist-red: #8a1c22;
+  position: relative;
+  overflow: hidden;
+  background: var(--hist-paper);
+  color: var(--ink);
+  padding-inline: var(--gutter);
+}
+
+.hist__eras {
+  margin-inline: auto;
+  max-width: 1280px;
+}
+
+/* The dials: half a clock at the head of the strip and half at its foot. */
+.hist-dial {
+  display: flex;
+  height: clamp(6.5rem, 15vw, 12rem);
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hist-dial svg {
+  width: clamp(13rem, 30vw, 24rem);
+  height: clamp(13rem, 30vw, 24rem);
+  flex: none;
+  filter: drop-shadow(0 10px 18px rgb(40 25 10 / 0.35));
+}
+
+.hist-dial--top svg {
+  margin-top: calc(-1 * clamp(6.5rem, 15vw, 12rem));
+}
+
+.hist-dial__numeral {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  fill: #2a1c10;
+}
+
+.hist-era {
+  display: grid;
+  gap: 1.75rem;
+  padding-block: clamp(2.5rem, 7vh, 4.5rem);
+  scroll-margin-top: var(--nav-h);
+}
+
+.hist-era + .hist-era {
+  border-top: 1px solid var(--hist-rule);
+}
+
+.hist-era__dates {
+  font-size: 0.64rem;
+  color: var(--hist-soft);
+}
+
+.hist-era__dates span {
+  margin-inline-end: 0.75rem;
+  color: var(--hist-red);
+}
+
+.hist-era__name {
+  margin-top: 0.9rem;
+  font-size: clamp(2.5rem, 5vw, 4.4rem);
+  font-weight: 600;
+  line-height: 0.98;
+}
+
+/* The line that ties a heading to the strip, with a dot at its outer end, as on a printed timeline. */
+.hist-era__rule {
+  position: relative;
+  z-index: 2;
+  margin-top: 1.1rem;
+  height: 2px;
+  background: var(--ink);
+}
+
+.hist-era__rule::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 0.7rem;
+  height: 0.7rem;
+  translate: 0 -50%;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.hist-era__medium {
+  margin-top: 1.1rem;
+  font-size: 0.62rem;
+  color: var(--hist-red);
+}
+
+.hist-era__kicker {
+  margin-top: 0.9rem;
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  line-height: 1.22;
+  font-style: italic;
+}
+
+/* Narrow screens: the strip is a row to swipe through. */
+.hist-era__strip {
+  display: flex;
+  gap: 0.9rem;
+  margin-inline: calc(-1 * var(--gutter));
+  overflow-x: auto;
+  padding: 0.75rem var(--gutter) 1.25rem;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.hist-era__strip::-webkit-scrollbar {
+  display: none;
+}
+
+.hist-shot {
+  position: relative;
+  display: block;
+  flex: none;
+  width: min(72vw, 20rem);
+  aspect-ratio: 4 / 5;
+  rotate: var(--tilt);
+  scroll-snap-align: center;
+  filter: drop-shadow(0 10px 14px rgb(40 30 15 / 0.3));
+  transition:
+    rotate 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    scale 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hist-shot:hover,
+.hist-shot:focus-visible {
+  z-index: 3;
+  rotate: 0deg;
+  scale: 1.03;
+}
+
+.hist-shot__paper {
+  display: block;
+  height: 100%;
+  background: #fbfaf6;
+  padding: 0.4rem 0.55rem;
+}
+
+.hist-shot__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A paper label stuck to the picture's corner. */
+.hist-shot__tag {
+  position: absolute;
+  bottom: 1rem;
+  left: -0.35rem;
+  max-width: 88%;
+  background: #fbfaf6;
+  padding: 0.5rem 0.7rem;
+  text-align: start;
+  font-size: 0.52rem;
+  line-height: 1.5;
+  letter-spacing: 0.2em;
+  color: var(--ink);
+  box-shadow: 0 2px 6px rgb(40 30 15 / 0.25);
+}
+
+.hist-era__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  font-size: 1rem;
+  line-height: 1.78;
+  color: var(--hist-soft);
+}
+
+.hist-era__lead {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.hist-era__side {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.hist-era__sidehead,
+.hist-era__legacy h3 {
+  font-size: 0.62rem;
+  color: var(--hist-red);
+}
+
+.hist-dates {
+  display: flex;
+  flex-direction: column;
+  margin-top: -0.75rem;
+}
+
+.hist-dates > div {
+  display: grid;
+  grid-template-columns: 5.6rem minmax(0, 1fr);
+  gap: 1rem;
+  border-top: 1px solid var(--hist-rule);
+  padding-block: 0.85rem;
+}
+
+.hist-dates dt {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.hist-dates dd {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--hist-soft);
+}
+
+.hist-era__legacy {
+  border-top: 2px solid var(--ink);
+  padding-top: 1.1rem;
+}
+
+.hist-era__legacy p {
+  margin-top: 0.7rem;
+  font-size: clamp(1.3rem, 1.9vw, 1.65rem);
+  line-height: 1.25;
+}
+
+.hist-era__count {
+  opacity: 0.7;
+}
+
+/* Wide screens: story | strip | dates, swapping sides on every other era. */
+@media (min-width: 1024px) {
+  .hist-era {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 5fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "head strip side"
+      "body strip side";
+    column-gap: clamp(2rem, 4vw, 4rem);
+    row-gap: 2rem;
+    padding-block: 0;
+  }
+
+  .hist-era + .hist-era {
+    border-top: 0;
+  }
+
+  .hist-era[data-flip] {
+    grid-template-areas:
+      "side strip head"
+      "side strip body";
+  }
+
+  .hist-era__head {
+    grid-area: head;
+    padding-top: clamp(3rem, 8vh, 5rem);
+    text-align: end;
+  }
+
+  .hist-era[data-flip] .hist-era__head {
+    text-align: start;
+  }
+
+  /* The rule runs on into the strip; the dot sits at the far end from it. */
+  .hist-era__rule {
+    margin-inline-end: calc(-1 * clamp(2rem, 4vw, 4rem) - 2.5rem);
+  }
+
+  .hist-era[data-flip] .hist-era__rule {
+    margin-inline: calc(-1 * clamp(2rem, 4vw, 4rem) - 2.5rem) 0;
+  }
+
+  .hist-era[data-flip] .hist-era__rule::before {
+    right: 0;
+    left: auto;
+  }
+
+  .hist-era__body {
+    grid-area: body;
+    padding-bottom: clamp(3rem, 8vh, 5rem);
+  }
+
+  .hist-era__side {
+    grid-area: side;
+    padding-block: clamp(3rem, 8vh, 5rem);
+  }
+
+  .hist-era__strip {
+    grid-area: strip;
+    flex-direction: column;
+    gap: 0;
+    margin-inline: 0;
+    overflow: visible;
+    padding: 0;
+  }
+
+  .hist-shot {
+    flex: 1 1 0;
+    width: auto;
+    min-height: 15rem;
+    aspect-ratio: auto;
+    margin-top: -0.8rem;
+  }
+
+  .hist-shot:first-child {
+    margin-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hist-shot {
+    transition: none;
+  }
+}
+
+/* The era's gallery: one picture at a time, each with its note. */
+.hist-gallery {
+  border: 1px solid var(--line);
+  background: #111210;
+  color: var(--cream);
+}
+
+.hist-gallery__head {
+  padding: 1.5rem 4.5rem 1.25rem 1.5rem;
+}
+
+.hist-gallery__stage {
+  position: relative;
+  display: grid;
+  min-height: 14rem;
+  place-items: center;
+  background: #080807;
+}
+
+.hist-gallery__img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: min(58svh, 36rem);
+  object-fit: contain;
+}
+
+.hist-gallery__arrow {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  translate: 0 -50%;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgb(17 18 16 / 0.72);
+  color: var(--cream);
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+}
+
+.hist-gallery__arrow:hover {
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+
+.hist-gallery__arrow--prev {
+  left: 0.75rem;
+}
+
+.hist-gallery__arrow--next {
+  right: 0.75rem;
+}
+
+.hist-gallery__caption {
+  padding: 1.5rem;
+}
+
+.hist-gallery__thumbs {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  border-top: 1px solid var(--line);
+  padding: 1rem 1.5rem 1.25rem;
+}
+
+.hist-gallery__thumbs button {
+  display: block;
+  width: 4.5rem;
+  height: 3.5rem;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid transparent;
+  opacity: 0.55;
+  transition:
+    opacity 0.2s,
+    border-color 0.2s;
+}
+
+.hist-gallery__thumbs button:hover,
+.hist-gallery__thumbs button[aria-current] {
+  border-color: var(--gold);
+  opacity: 1;
+}
+
+.hist-gallery__thumbs img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (min-width: 768px) {
+  .hist-gallery__head {
+    padding: 2rem 5rem 1.5rem 2.25rem;
+  }
+
+  .hist-gallery__caption {
+    padding: 1.75rem 2.25rem 2rem;
+  }
+
+  .hist-gallery__thumbs {
+    padding-inline: 2.25rem;
+  }
+}
+
+/* ── The footer's hidden door: the crest, and the verticals stitched beneath it ── */
+.crest-egg {
+  --thread-red: #8a1c22;
+  --thread-green: #2f4a2c;
+  --thread-gold: #9a6d17;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* The artwork's own cloth with the crest taken out, so it runs on below it and repeats downward without a seam. */
+  background: #e9dcc3 url("/images/logos/crest-cloth.webp") top center / max(100%, 1100px) auto repeat-y;
+  color: #33240f;
+}
+
+.crest-egg__cloth {
+  position: relative;
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  overflow: hidden;
+}
+
+/* Narrow screens crop to the crest itself; its edges dissolve into the tiled cloth. */
+.crest-egg__crest {
+  width: 100%;
+  aspect-ratio: 1 / 1.08;
+  object-fit: cover;
+  mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 86%, transparent);
+  animation: crest-sew 1.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (min-width: 768px) {
+  .crest-egg__crest {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    aspect-ratio: auto;
+    mask-image: linear-gradient(to bottom, #000 80%, transparent);
+  }
+}
+
+@keyframes crest-sew {
+  from {
+    opacity: 0;
+    transform: scale(1.14);
+    filter: blur(16px) saturate(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.crest-egg__cue {
+  position: absolute;
+  bottom: 1.6rem;
+  left: 50%;
+  display: flex;
+  translate: -50% 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.6rem;
+  color: var(--thread-green);
+  animation: crest-sew 1.2s 1.2s ease-out both;
+}
+
+/* Wide screens: the crest's own lettering sits at the foot of the cloth, so the cue moves to the side. */
+@media (min-width: 768px) {
+  .crest-egg__cue {
+    right: var(--gutter);
+    left: auto;
+    translate: none;
+  }
+}
+
+.crest-egg__cue span {
+  width: 1px;
+  height: 2.2rem;
+  background: linear-gradient(to bottom, var(--thread-green), transparent);
+}
+
+.crest-egg__verticals {
+  margin-inline: auto;
+  max-width: calc(1280px + 2 * var(--gutter));
+  padding: clamp(3rem, 9vh, 6rem) var(--gutter) clamp(5rem, 14vh, 9rem);
+}
+
+/* Type on the cloth is set like thread: a light edge below, a dark one above. */
+.crest-egg__title {
+  text-align: center;
+  font-size: clamp(2.6rem, 6.4vw, 5.4rem);
+  line-height: 1;
+  color: var(--thread-red);
+  text-shadow:
+    0 1px 0 rgb(255 250 235 / 0.8),
+    0 -1px 1px rgb(60 20 10 / 0.35);
+}
+
+.crest-egg__title em {
+  color: var(--thread-gold);
+}
+
+.crest-egg__grid {
+  display: grid;
+  gap: clamp(1.25rem, 2.4vw, 2rem);
+  margin-top: clamp(2.5rem, 7vh, 4.5rem);
+}
+
+@media (min-width: 640px) {
+  .crest-egg__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Five patches: three and two on a middling screen, one row on a wide one. */
+@media (min-width: 900px) {
+  .crest-egg__grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .crest-egg__grid li {
+    grid-column: span 2;
+  }
+
+  .crest-egg__grid li:nth-child(4) {
+    grid-column: 2 / span 2;
+  }
+}
+
+@media (min-width: 1240px) {
+  .crest-egg__grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .crest-egg__grid li,
+  .crest-egg__grid li:nth-child(4) {
+    grid-column: auto;
+  }
+}
+
+/* A patch sewn onto the cloth: raised a little, with a dashed line of stitching inside its edge. */
+.crest-patch {
+  --thread: var(--thread-red);
+  position: relative;
+  display: flex;
+  height: 100%;
+  min-height: 15rem;
+  flex-direction: column;
+  gap: 0.9rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(160deg, rgb(255 251 240 / 0.7), rgb(236 222 196 / 0.55));
+  padding: 2.1rem 1.75rem 1.9rem;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.75),
+    inset 0 -1px 0 rgb(90 60 20 / 0.18),
+    0 14px 26px -16px rgb(70 45 15 / 0.7);
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.crest-patch::before {
+  content: "";
+  position: absolute;
+  inset: 0.5rem;
+  border: 2px dashed var(--thread);
+  border-radius: 0.3rem;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.crest-egg__grid li:nth-child(5n + 2) .crest-patch {
+  --thread: var(--thread-green);
+}
+
+.crest-egg__grid li:nth-child(5n + 3) .crest-patch {
+  --thread: var(--thread-gold);
+}
+
+.crest-egg__grid li:nth-child(5n + 4) .crest-patch {
+  --thread: #6b1a3a;
+}
+
+.crest-egg__grid li:nth-child(5n + 5) .crest-patch {
+  --thread: #1f4a52;
+}
+
+.crest-patch:hover,
+.crest-patch:focus-visible {
+  transform: translateY(-5px) rotate(-0.6deg);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.75),
+    inset 0 -1px 0 rgb(90 60 20 / 0.18),
+    0 26px 34px -18px rgb(70 45 15 / 0.75);
+}
+
+.crest-patch__no,
+.crest-patch__line,
+.crest-patch__go {
+  font-size: 0.58rem;
+}
+
+.crest-patch__no {
+  color: var(--thread);
+}
+
+.crest-patch__name {
+  font-size: clamp(1.6rem, 2vw, 2.1rem);
+  line-height: 1.02;
+  font-weight: 600;
+  color: var(--thread);
+  text-shadow:
+    0 1px 0 rgb(255 250 235 / 0.85),
+    0 -1px 1px rgb(40 20 10 / 0.25);
+}
+
+.crest-patch__line {
+  line-height: 1.7;
+  color: rgb(51 36 15 / 0.78);
+}
+
+.crest-patch__go {
+  margin-top: auto;
+  padding-top: 0.8rem;
+  color: var(--thread);
+}
+
+/* Sewn on as they come into view. */
+.crest-egg [data-stitch] {
+  opacity: 0;
+  transform: translateY(26px) scale(0.97);
+  transition:
+    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--i, 0) * 110ms);
+}
+
+.crest-egg [data-stitch][data-in] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crest-egg__crest,
+  .crest-egg__cue {
+    animation: none;
+  }
+
+  .crest-egg [data-stitch] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .crest-patch {
+    transition: none;
+  }
+}
+
+/* Pre-footer: the hero's sunset arc, rising out of the footer. */
+
+/* ── Asraya ───────────────────────────────────────────────── */
+/* Asraya's design language: warm ivory pages broken by deep-teal bands, marigold and clay for emphasis, Fraunces (its
+   signature face) for the wordmark and headlines, the site's body face for reading, and drawings made for the site in
+   the same four colours (components/asraya/illustrations.tsx). Inside the site's header, footer, button and reveals.
+   Scoped to .asraya. */
+.asraya {
+  --a-ivory: #f7f2ea;
+  --a-sand: #efe5d4;
+  --a-ink: #1c2526;
+  --a-teal: #0e3b3a;
+  --a-teal-2: #155250;
+  --a-marigold: #e9a23b;
+  /* Clay is the accent for text on ivory (AA); marigold is the accent on teal and for drawn fills. */
+  --a-clay: #a8401f;
+  /* Role tokens, flipped inside a deep band. */
+  --a-bg: var(--a-ivory);
+  --a-fg: var(--a-ink);
+  --a-soft: rgb(28 37 38 / 0.84);
+  --a-faint: rgb(28 37 38 / 0.7);
+  --a-accent: var(--a-clay);
+  --a-rule: rgb(28 37 38 / 0.16);
+  --a-red: var(--a-accent);
+  background: var(--a-ivory);
+  color: var(--a-fg);
+  /* Bands break out of the centred column to the screen's edges. */
+  overflow-x: clip;
+}
+
+/* On Asraya pages the site's fixed backdrop takes the ivory, so the page runs straight into the footer's sunset. */
+body:has(.asraya),
+body:has(.asraya) .backdrop {
+  background: #f7f2ea;
+}
+
+.a-band--deep {
+  --a-bg: var(--a-teal);
+  --a-fg: var(--a-ivory);
+  --a-soft: rgb(247 242 234 / 0.86);
+  --a-faint: rgb(247 242 234 / 0.74);
+  --a-accent: var(--a-marigold);
+  --a-rule: rgb(247 242 234 / 0.18);
+  --a-red: var(--a-accent);
+  background:
+    radial-gradient(120% 90% at 85% 0%, var(--a-teal-2), transparent 60%),
+    var(--a-teal);
+  color: var(--a-fg);
+}
+
+.a-band {
+  position: relative;
+  padding-block: clamp(4.5rem, 12vh, 8.5rem);
+}
+
+.a-bleed {
+  margin-inline: calc(50% - 50vw);
+}
+
+.a-wrap {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 1280px;
+  padding-inline: var(--gutter);
+}
+
+/* ── Type ── */
+
+/* Heavy condensed headline used outside Asraya (About, Valora); on Asraya pages it becomes Fraunces. */
+.a-display {
+  font-family: var(--font-anton), Impact, "Arial Narrow Bold", sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.94;
+  letter-spacing: 0.005em;
+}
+.asraya .a-display {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 800;
+  text-transform: none;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  font-variation-settings: "opsz" 144;
+}
+
+/* The wordmark: the whole word in Cormorant's bold italic, in one colour — the one place Asraya's second face appears. */
+.a-wordmark {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 0.86;
+  letter-spacing: -0.03em;
+  color: var(--a-teal);
+}
+
+.a-h1 {
+  font-size: clamp(3rem, 8vw, 7rem);
+}
+
+.a-h2 {
+  font-size: clamp(2.3rem, 5vw, 4.4rem);
+  text-wrap: balance;
+}
+
+/* The emphasised half of a headline: italic, in the accent. */
+.a-em {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--a-accent);
+}
+
+.a-serif {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.015em;
+}
+
+.a-lead {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(1.4rem, 2.2vw, 1.95rem);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
+}
+
+.a-quote {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.7rem, 3.1vw, 2.7rem);
+  line-height: 1.18;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.a-wide {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.a-body {
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.72;
+  color: var(--a-soft);
+  text-wrap: pretty;
+}
+@media (min-width: 1024px) {
+  .a-body {
+    font-size: 1.125rem;
+  }
+}
+.a-body strong,
+.a-strong {
+  font-weight: 800;
+  color: var(--a-fg);
+}
+
+.a-title {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: clamp(1.1rem, 1.5vw, 1.3rem);
+  line-height: 1.25;
+  color: var(--a-fg);
+}
+
+.a-red {
+  color: var(--a-accent);
+}
+.a-faint {
+  color: var(--a-faint);
+}
+.a-rule {
+  border-color: var(--a-rule);
+}
+
+/* Word-by-word scroll highlight (see StoryMotion): words start faint and fill in as the line passes. */
+.a-words .a-word {
+  display: inline-block;
+}
+
+/* ── Page head: every inner page opens on a deep band with its drawing. ── */
+
+.a-head {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+  padding-block: clamp(3.5rem, 9vh, 6.5rem);
+}
+@media (min-width: 900px) {
+  .a-head {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 4rem;
+  }
+}
+/* Anything after the title (the today/tomorrow contrast) spans the whole head. */
+.a-head__more {
+  grid-column: 1 / -1;
+}
+.a-head__art {
+  width: 100%;
+  max-width: 30rem;
+  justify-self: center;
+}
+
+/* ── Cards ── */
+
+.a-card {
+  border-radius: 1.5rem;
+  background: var(--a-sand);
+  padding: clamp(1.5rem, 2.6vw, 2.25rem);
+}
+.a-band--deep .a-card {
+  background: rgb(247 242 234 / 0.06);
+  border: 1px solid var(--a-rule);
+}
+/* A card that is itself a deep band: teal, with the band's flipped text colours. */
+.a-card.a-band--deep {
+  background:
+    radial-gradient(120% 90% at 85% 0%, var(--a-teal-2), transparent 60%),
+    var(--a-teal);
+}
+a.a-card {
+  display: block;
+  transition:
+    transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.35s ease-out;
+}
+@media (hover: hover) {
+  a.a-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 22px 40px -26px rgb(14 59 58 / 0.55);
+  }
+}
+
+/* Line icons and drawings take the text colour; `.fill-accent` parts take marigold. */
+.a-icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  color: var(--a-teal);
+}
+.a-band--deep .a-icon {
+  color: var(--a-ivory);
+}
+.a-art-fill {
+  fill: var(--a-marigold);
+}
+.a-art-fill--clay {
+  fill: var(--a-clay);
+}
+.a-art-fill--teal {
+  fill: var(--a-teal);
+}
+.a-art-fill--ivory {
+  fill: var(--a-ivory);
+}
+.a-art-fill--sand {
+  fill: var(--a-sand);
+}
+.a-art-stroke {
+  stroke: var(--a-marigold);
+}
+
+/* ── Chapters (inner pages) ── */
+
+.a-chapter {
+  display: grid;
+  gap: 1.5rem;
+  border-top: 1px solid var(--a-rule);
+  padding-block: clamp(2.5rem, 6vh, 4rem) clamp(4rem, 10vh, 7rem);
+}
+@media (min-width: 1024px) {
+  .a-chapter {
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: 4rem;
+  }
+}
+
+.a-chapter__mark {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+}
+@media (min-width: 1024px) {
+  .a-chapter__mark {
+    position: sticky;
+    top: calc(var(--a-stick, var(--nav-h)) + 1.75rem);
+    flex-direction: column;
+    gap: 0.6rem;
+    align-self: start;
+  }
+}
+@media (max-width: 1023px) {
+  .a-chapter__mark .a-wide {
+    display: none;
+  }
+}
+
+.a-chapter__num {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 2.6rem;
+  line-height: 0.9;
+  color: var(--a-accent);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* A long page's chapters as a bar that sticks under the site header; the one being read is marked. */
+.a-index {
+  position: sticky;
+  top: var(--nav-h);
+  z-index: 5;
+  margin-inline: calc(-1 * var(--gutter));
+  padding-inline: var(--gutter);
+  background: var(--a-ivory);
+  border-bottom: 1px solid var(--a-rule);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.a-index::-webkit-scrollbar {
+  display: none;
+}
+.a-index ol {
+  display: flex;
+  gap: 1.6rem;
+  width: max-content;
+}
+.a-index a {
+  display: flex;
+  gap: 0.45rem;
+  padding-block: 0.95rem 0.8rem;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--a-faint);
+  transition:
+    color 0.2s ease-out,
+    border-color 0.2s ease-out;
+}
+.a-index a span:first-child {
+  font-variant-numeric: tabular-nums;
+}
+@media (hover: hover) {
+  .a-index a:hover {
+    color: var(--a-fg);
+  }
+}
+.a-index a[aria-current="true"] {
+  color: var(--a-clay);
+  border-color: var(--a-marigold);
+}
+.a-has-index {
+  --a-stick: calc(var(--nav-h) + 3rem);
+}
+
+/* Index rows: a ruled list of titles; each opens to its text below. */
+.a-rows > li {
+  border-top: 1px solid var(--a-rule);
+}
+.a-rows > li:last-child {
+  border-bottom: 1px solid var(--a-rule);
+}
+.a-rows summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-block: 1.2rem;
+  cursor: pointer;
+  list-style: none;
+}
+.a-rows summary::-webkit-details-marker {
+  display: none;
+}
+.a-rows .a-title {
+  font-size: clamp(1.15rem, 1.7vw, 1.45rem);
+  transition: color 0.2s ease-out;
+}
+@media (hover: hover) {
+  .a-rows summary:hover .a-title {
+    color: var(--a-accent);
+  }
+}
+.a-rows__body {
+  max-width: 40rem;
+  padding-bottom: 1.6rem;
+}
+@media (min-width: 768px) {
+  .a-rows__body {
+    margin-left: 2.25rem;
+  }
+}
+
+/* "Read more": the rest of a chapter, folded away. */
+.a-more {
+  margin-top: 1.75rem;
+}
+.a-more > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--a-accent);
+}
+.a-more > summary::-webkit-details-marker {
+  display: none;
+}
+.a-more__open,
+.a-more[open] .a-more__closed {
+  display: none;
+}
+.a-more[open] .a-more__open {
+  display: inline;
+}
+.a-more__body {
+  padding-top: 0.75rem;
+}
+
+/* The plus that turns into a minus when a fold is open. */
+.a-more__icon {
+  position: relative;
+  flex: none;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 999px;
+  background: var(--a-sand);
+  color: var(--a-clay);
+  transition: background-color 0.2s ease-out;
+}
+.a-band--deep .a-more__icon {
+  background: rgb(247 242 234 / 0.1);
+  color: var(--a-marigold);
+}
+.a-more__icon::before,
+.a-more__icon::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 0.6rem;
+  height: 1.5px;
+  background: currentColor;
+  translate: -50% -50%;
+  transition: rotate 0.25s ease-out;
+}
+.a-more__icon::after {
+  rotate: 90deg;
+}
+details[open] > summary .a-more__icon::after {
+  rotate: 0deg;
+}
+
+/* Folded text is never left hidden by the reveal motion, which cannot see it while it is closed. */
+.a-more__body [data-reveal],
+.a-rows__body [data-reveal] {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Short lists as small tags. */
+.a-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.a-tags > li {
+  border-radius: 999px;
+  background: var(--a-sand);
+  padding: 0.35rem 0.85rem;
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--a-fg);
+}
+.a-band--deep .a-tags > li {
+  background: rgb(247 242 234 / 0.1);
+}
+
+/* A statement set off by an accent rule on its left. */
+.a-callout {
+  border-left: 3px solid var(--a-marigold);
+  padding-left: clamp(1rem, 2.4vw, 1.75rem);
+}
+
+/* ── Pictures ── */
+
+/* The cover's jigsaw of portraits, multiplied onto the ivory. */
+.a-cover__collage {
+  width: 100%;
+  height: auto;
+  mix-blend-mode: multiply;
+  filter: brightness(1.09) contrast(1.12);
+}
+
+/* The owner's photographs, toned to one warm black and white so they read as a set. */
+.a-photo {
+  border-radius: 1.25rem;
+  overflow: hidden;
+}
+.a-photo img {
+  filter: grayscale(1) sepia(0.2) contrast(1.06);
+}
+
+/* Where the owner's field photographs will go. */
+.asraya .placeholder {
+  min-height: 0;
+  border-radius: 1.25rem;
+  background: var(--a-sand);
+  box-shadow: none;
+  border: 1px dashed rgb(28 37 38 / 0.3);
+  color: var(--a-faint);
+}
+
+/* ── Drawings (components/asraya/graphics.tsx, illustrations.tsx) ── */
+
+.a-network__node {
+  fill: var(--a-fg);
+}
+.a-network__node--accent {
+  fill: var(--a-marigold);
+}
+.a-network__halo {
+  fill: none;
+  stroke: var(--a-rule);
+  stroke-width: 1.25;
+  stroke-dasharray: 3 5;
+}
+.a-network__link {
+  stroke: var(--a-marigold);
+  stroke-width: 1.75;
+  fill: none;
+}
+.a-network__label {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  fill: var(--a-faint);
+}
+@media (max-width: 767px) {
+  .a-network__label {
+    font-size: 40px;
+    letter-spacing: 0.1em;
+  }
+}
+
+.a-search {
+  max-width: 34rem;
+}
+.a-search__bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border-radius: 999px;
+  background: var(--a-ivory);
+  box-shadow: 0 10px 30px -18px rgb(14 59 58 / 0.6);
+  padding: 0.75rem 1.35rem;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--a-faint);
+}
+.a-search__results {
+  margin-top: 1.25rem;
+  display: grid;
+  gap: 1.1rem;
+  padding-inline: 1.35rem;
+}
+.a-search__row {
+  display: grid;
+  gap: 0.4rem;
+}
+.a-search__row > span {
+  display: block;
+  max-width: 100%;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: rgb(28 37 38 / 0.12);
+}
+.a-search__row > span:first-child {
+  height: 0.7rem;
+  background: rgb(28 37 38 / 0.22);
+}
+.a-search__row[data-found] span:first-child {
+  background: var(--a-marigold);
+}
+/* Played: the NGO's result climbs from third to first (each row is 2.4rem with a 1.1rem gap). */
+.a-search__row {
+  transition: translate 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+[data-on] .a-search__row {
+  translate: 0 3.5rem;
+}
+[data-on] .a-search__row[data-found] {
+  translate: 0 -7rem;
+}
+.a-play .a-search {
+  text-align: left;
+}
+
+/* Sound waves on the "amplify" drawing: a slow pulse outward. Still for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .a-wave {
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: a-wave 3.2s cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+  }
+  .a-wave:nth-of-type(2) {
+    animation-delay: 0.4s;
+  }
+  .a-wave:nth-of-type(3) {
+    animation-delay: 0.8s;
+  }
+}
+@keyframes a-wave {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+/* ── Asraya's own navigation ── */
+
+.a-subnav a {
+  border-bottom: 2px solid transparent;
+  padding-bottom: 0.3rem;
+  transition:
+    color 0.2s ease-out,
+    border-color 0.2s ease-out;
+}
+.a-subnav a[aria-current="page"] {
+  border-color: var(--a-marigold);
+  color: var(--a-fg);
+}
+
+/* The site's one button: deep teal on ivory, marigold on teal. */
+.asraya .btn {
+  --btn-ink: var(--a-ivory);
+  --btn-ink-hover: #ffffff;
+  --btn-face: var(--a-teal);
+  --btn-shadows: 0 14px 28px -14px rgb(14 59 58 / 0.6);
+  --btn-pressed: inset 0 2px 6px rgb(0 0 0 / 0.35);
+}
+.asraya .a-band--deep .btn {
+  --btn-ink: var(--a-ink);
+  --btn-ink-hover: var(--a-ink);
+  --btn-face: var(--a-marigold);
+  --btn-shadows: 0 14px 28px -14px rgb(0 0 0 / 0.55);
+}
+
+.asraya :focus-visible {
+  outline-color: var(--a-marigold);
+}
+
+/* ── Playable drawings (components/story/Play.tsx, illustrations.tsx) ──
+   A drawing plays on its own once it is in view (`data-on`, set by <Play>), and so does any drawing inside a
+   `[data-on]` (a story step being read); a linked card also plays its drawing on hover. The pointer leans it (`data-d`
+   parts drift by their `--d` depth). Parts move with the individual translate/rotate/scale properties, so they compose
+   with the scroll motion's transforms instead of fighting them. */
+
+.a-play {
+  --px: 0;
+  --py: 0;
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+/* Every moving part: one easing, a little longer for the big moves. */
+.a-scene [data-d],
+.a-scene :is(.a-gift__lid, .a-gift__glow, .a-burst, .a-house__wall, .a-house__win, .a-spot__beam, .a-amp__horn, .a-amp__waves,
+  .a-together__star, .a-sun, .a-sun__night, .a-tk__hero, .a-tk__phone, .a-tk__like, .a-spin, .a-stamp__print,
+  .a-press__sheet, .a-clap__arm, .a-clap__flash, .a-flag, .a-spread, .a-puz, .a-puz__seam, .a-tick, .a-pencil, .a-grow, .a-grow__stem, .a-leaf) {
+  transition:
+    translate 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    rotate 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    scale 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.5s ease-out,
+    fill 0.5s ease-out,
+    stroke-dashoffset 0.45s ease-out;
+}
+.a-scene :is(.a-burst, .a-together__star, .a-spin, .a-stamp__print, .a-puz__seam, .a-leaf, .a-tk__like, .a-flag) {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.a-scene .a-flag,
+.a-scene .a-leaf {
+  transform-origin: 50% 0%;
+}
+
+/* Lean towards the pointer. */
+.a-play [data-d] {
+  translate: calc(var(--px) * var(--d) * 1px) calc(var(--py) * var(--d) * 1px);
+}
+
+/* Played: written once for a pressed drawing and for a hovered card that holds one. */
+[data-on] .a-burst,
+a.a-card:hover .a-burst {
+  translate: calc(var(--bx) * 1px) calc(var(--by) * 1px);
+  rotate: 45deg;
+  scale: 1.3;
+}
+.a-burst--hidden {
+  opacity: 0;
+  scale: 0.2;
+}
+[data-on] .a-burst--hidden,
+a.a-card:hover .a-burst--hidden {
+  opacity: 1;
+  transition-delay: calc(var(--i) * 70ms + 0.15s);
+}
+
+/* Gift: the lid swings up from its left corner and light pours out. */
+.a-gift__lid {
+  transform-box: view-box;
+  transform-origin: 98px 168px;
+}
+.a-gift__glow {
+  transform-box: view-box;
+  transform-origin: 200px 160px;
+  scale: 1 0;
+  opacity: 0;
+}
+[data-on] .a-gift__lid,
+a.a-card:hover .a-gift__lid {
+  rotate: -26deg;
+  translate: -4px -26px;
+}
+[data-on] .a-gift__glow,
+a.a-card:hover .a-gift__glow {
+  scale: 1;
+  opacity: 0.22;
+}
+
+/* Spotlight: the beam follows the pointer; played, it widens and every house lights up in turn. */
+.a-spot__beam {
+  transform-box: view-box;
+  transform-origin: 200px 10px;
+  rotate: calc(var(--px) * -16deg);
+}
+[data-on] .a-spot__beam,
+a.a-card:hover .a-spot__beam {
+  scale: 2.7 1;
+}
+.a-house__wall,
+.a-house__win {
+  transition-delay: calc(var(--i) * 90ms) !important;
+}
+[data-on] .a-house__wall,
+a.a-card:hover .a-house__wall {
+  fill: var(--a-marigold);
+}
+[data-on] .a-house__win,
+a.a-card:hover .a-house__win {
+  fill: var(--a-ivory);
+}
+
+/* Amplify: the megaphone aims with the pointer; played, the sound grows and the crowd jumps. */
+.a-amp__horn {
+  transform-box: view-box;
+  transform-origin: 70px 150px;
+  rotate: calc(var(--py) * 9deg);
+}
+.a-amp__waves {
+  transform-box: view-box;
+  transform-origin: 160px 150px;
+}
+[data-on] .a-amp__waves,
+a.a-card:hover .a-amp__waves {
+  scale: 1.22;
+}
+
+/* Together: played, the ✦ grows and turns and rings go out from it. */
+.a-together__ring {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+[data-on] .a-together__star,
+a.a-card:hover .a-together__star {
+  scale: 1.7;
+  rotate: 90deg;
+}
+
+/* Sunrise: the sun follows the pointer up; played, it clears the hills, its rays turn and the stars go. */
+.a-sun {
+  translate: 0 calc(var(--py) * 18px);
+}
+.a-sun__rays {
+  transform-box: view-box;
+  transform-origin: 200px 214px;
+}
+[data-on] .a-sun,
+a.a-card:hover .a-sun {
+  translate: 0 calc(-40px + var(--py) * 8px);
+}
+[data-on] .a-sun__night,
+a.a-card:hover .a-sun__night {
+  opacity: 0.25;
+}
+
+/* Toolkit: played, the page goes live — the hero turns clay, the phone lifts and a like pops up. */
+.a-tk__phone {
+  transform-box: view-box;
+  transform-origin: 308px 286px;
+}
+.a-tk__like {
+  scale: 0;
+}
+[data-on] .a-tk__hero,
+a.a-card:hover .a-tk__hero {
+  fill: var(--a-clay);
+}
+[data-on] .a-tk__phone,
+a.a-card:hover .a-tk__phone {
+  translate: 0 -16px;
+  rotate: 5deg;
+}
+[data-on] .a-tk__like,
+a.a-card:hover .a-tk__like {
+  scale: 1;
+  transition-delay: 0.2s;
+}
+[data-on] .a-spin,
+a.a-card:hover .a-spin {
+  rotate: 90deg;
+  scale: 1.2;
+}
+
+/* Stamp: played, it comes down, presses and lifts, leaving the mark. */
+.a-stamp__print {
+  opacity: 0;
+  scale: 0.8;
+}
+[data-on] .a-stamp__print {
+  opacity: 1;
+  scale: 1;
+  transition-delay: 0.32s;
+}
+[data-on] .a-stamp__tool {
+  animation: a-stamp 0.9s cubic-bezier(0.5, 0, 0.3, 1);
+}
+@keyframes a-stamp {
+  40%,
+  50% {
+    translate: 0 66px;
+  }
+}
+
+/* Press: played, the papers fan out from the foot of the stack. */
+.a-press__sheet {
+  transform-box: view-box;
+  transform-origin: 200px 270px;
+}
+[data-on] .a-press__sheet {
+  rotate: calc(var(--r) * 1deg);
+  translate: calc(var(--tx) * 1px) 0;
+}
+
+/* Clapper: open at rest; played, it snaps shut and the light flashes. */
+.a-clap__arm {
+  transform-box: view-box;
+  transform-origin: 102px 130px;
+  rotate: -18deg;
+}
+.a-clap__flash {
+  opacity: 0;
+}
+[data-on] .a-clap__arm {
+  rotate: 0deg;
+  transition-duration: 0.18s;
+  transition-timing-function: cubic-bezier(0.6, 0, 1, 1);
+}
+[data-on] .a-clap__flash {
+  opacity: 1;
+  transition-delay: 0.16s;
+}
+
+/* Bunting: the flags sway with the pointer; played, they flutter and confetti falls. */
+.a-flag {
+  rotate: calc(var(--px) * -10deg);
+  transition-delay: calc(var(--i) * 30ms) !important;
+}
+.a-confetti {
+  opacity: 0;
+}
+
+/* Paperwork: played, the pieces spread apart. */
+[data-on] .a-spread {
+  translate: calc(var(--bx) * 1px) calc(var(--by) * 1px);
+}
+.a-id {
+  transform-box: view-box;
+  transform-origin: 318px 10px;
+}
+
+/* Puzzle: apart at rest; played, the pieces fit and the ✦ shows at the seam. */
+.a-puz--l {
+  translate: -26px 10px;
+  rotate: -7deg;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.a-puz--r {
+  translate: 30px -12px;
+  rotate: 8deg;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.a-puz__seam {
+  opacity: 0;
+  scale: 0.3;
+}
+[data-on] .a-puz {
+  translate: 0 0;
+  rotate: 0deg;
+}
+[data-on] .a-puz__seam {
+  opacity: 1;
+  scale: 1;
+  transition-delay: 0.45s;
+}
+
+/* Checklist: played, each ask is ticked in turn while the pencil follows. */
+.a-tick {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+[data-on] .a-tick {
+  stroke-dashoffset: 0;
+  transition-delay: calc(var(--i) * 0.14s);
+}
+[data-on] .a-pencil {
+  translate: -10px 30px;
+  rotate: -8deg;
+}
+.a-pencil {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+/* Growth: the plant sways with the pointer; played, the stem grows and the leaves and ✦ open in turn. */
+.a-grow {
+  transform-box: view-box;
+  transform-origin: 200px 232px;
+  rotate: calc(var(--px) * 7deg);
+}
+.a-grow__stem {
+  transform-box: view-box;
+  transform-origin: 200px 232px;
+  scale: 1 0.5;
+}
+.a-leaf {
+  opacity: 0;
+  scale: 0;
+}
+[data-on] .a-grow__stem {
+  scale: 1;
+}
+[data-on] .a-leaf {
+  opacity: 1;
+  scale: 1;
+  transition-delay: calc(var(--i) * 0.12s + 0.2s);
+}
+
+/* Ripple (components/asraya/Ripple.tsx): each touch sends rings across the water. */
+.a-ripple {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: a-ripple 2.4s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+@keyframes a-ripple {
+  from {
+    scale: 0.08;
+    opacity: 1;
+  }
+  to {
+    scale: 1;
+    opacity: 0;
+  }
+}
+
+/* Icons in cards turn their accent when the card is hovered. */
+.a-icon .a-icon__accent {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    scale 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+    rotate 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* Lifts with `translate`, which leaves the reveal motion's inline transform alone. */
+.a-card--lift {
+  transition:
+    translate 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.35s ease-out;
+}
+@media (hover: hover) {
+  .a-card:hover .a-icon__accent {
+    scale: 1.18;
+    rotate: -8deg;
+  }
+  .a-card--lift:hover {
+    translate: 0 -4px;
+    box-shadow: 0 22px 40px -26px rgb(14 59 58 / 0.55);
+  }
+}
+
+/* The joined network answers the pointer: a node lights its links and neighbours and sends out a ring. */
+.a-network__hit {
+  fill: transparent;
+  stroke: none;
+  pointer-events: all;
+  cursor: crosshair;
+}
+.a-network__link,
+.a-network__node {
+  transition:
+    stroke 0.25s ease-out,
+    stroke-width 0.25s ease-out,
+    fill 0.25s ease-out,
+    scale 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.25s ease-out;
+}
+.a-network__node {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.a-network[data-hot] .a-network__link {
+  opacity: 0.35;
+}
+.a-network .a-network__link.is-hot {
+  opacity: 1;
+  stroke: var(--a-ivory);
+  stroke-width: 3;
+}
+.a-network .a-network__node.is-near {
+  fill: var(--a-marigold);
+  scale: 1.5;
+}
+.a-network .a-network__node.is-hot {
+  fill: var(--a-ivory);
+  scale: 2;
+}
+.a-network__pulse {
+  fill: none;
+  stroke: var(--a-marigold);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: a-ripple 1.2s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+/* Motion that runs on its own only plays when motion is welcome; reduced motion keeps every state but drops the lean. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-on] .a-hop,
+  a.a-card:hover .a-hop {
+    animation: a-hop 0.55s cubic-bezier(0.3, 0, 0.4, 1) calc(var(--i) * 0.09s) infinite alternate;
+  }
+  [data-on] .a-together__ring {
+    animation: a-ring 1.8s cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+  }
+  [data-on] .a-together__ring--late {
+    animation-delay: 0.9s;
+  }
+  [data-on] .a-sun__rays,
+  a.a-card:hover .a-sun__rays {
+    animation: a-turn 14s linear infinite;
+  }
+  [data-on] .a-flag {
+    animation: a-flutter 0.5s ease-in-out calc(var(--i) * 0.06s) infinite alternate;
+  }
+  [data-on] .a-confetti {
+    animation: a-fall 1.6s cubic-bezier(0.3, 0, 0.6, 1) calc(var(--i) * 0.13s) infinite;
+  }
+  [data-on] .a-id {
+    animation: a-swing 1.4s ease-in-out infinite alternate;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .a-play [data-d] {
+    translate: none;
+  }
+  [data-on] .a-confetti {
+    opacity: 1;
+  }
+  .a-scene * {
+    transition-duration: 0.01s !important;
+  }
+}
+@keyframes a-hop {
+  to {
+    translate: 0 -14px;
+  }
+}
+@keyframes a-ring {
+  from {
+    opacity: 0.9;
+    scale: 0.6;
+  }
+  to {
+    opacity: 0;
+    scale: 2.6;
+  }
+}
+@keyframes a-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes a-flutter {
+  from {
+    rotate: -12deg;
+  }
+  to {
+    rotate: 12deg;
+  }
+}
+@keyframes a-fall {
+  from {
+    opacity: 0;
+    translate: 0 -80px;
+    rotate: 0deg;
+  }
+  20% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    translate: 0 70px;
+    rotate: 180deg;
+  }
+}
+@keyframes a-swing {
+  from {
+    rotate: -7deg;
+  }
+  to {
+    rotate: 7deg;
+  }
+}
+
+/* Partnership measures: the chess piece rises and turns marigold as its card is hovered. */
+.a-measure__piece {
+  display: inline-block;
+  transition:
+    translate 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 0.3s ease-out;
+}
+@media (hover: hover) {
+  .a-measure:hover .a-measure__piece {
+    translate: 0 -6px;
+    color: var(--a-marigold);
+  }
+}
+
+/* ── Supporter's story drawings (components/asraya/journey-art.tsx) ── */
+
+.a-scene :is(.a-word__bubble, .a-word__head, .a-look__typed, .a-look__pin, .a-look__ring, .a-clar__mess, .a-clar__clean,
+  .a-clar__hand, .a-screen__bar, .a-screen__play, .a-screen__heart, .a-door__panel, .a-door__light, .a-jar__level, .a-jar__heart,
+  .a-letter__card, .a-letter__flap, .a-gather__link, .a-gather__friend) {
+  transition:
+    translate 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    rotate 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    scale 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.5s ease-out,
+    fill 0.5s ease-out,
+    stroke-dashoffset 0.6s ease-out;
+}
+.a-scene :is(.a-word__bubble, .a-look__pin, .a-look__ring, .a-screen__play, .a-screen__heart, .a-jar__heart, .a-gather__friend) {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Word: the bubble speaks up and the listener lights. */
+.a-word__bubble {
+  scale: 0.86;
+  transform-origin: 30% 100% !important;
+}
+[data-on] .a-word__bubble {
+  scale: 1.06;
+  translate: 0 -6px;
+}
+[data-on] .a-word__head {
+  fill: var(--a-marigold);
+  transition-delay: 0.3s;
+}
+
+/* Lookup: the search fills in, the pin drops and rings. */
+.a-look__typed {
+  transform-box: fill-box;
+  transform-origin: 0 50%;
+  scale: 0.3 1;
+}
+.a-look__ring {
+  opacity: 0;
+  scale: 0.4;
+}
+[data-on] .a-look__typed {
+  scale: 1;
+}
+.a-look__pin {
+  transform-origin: 50% 100% !important;
+}
+[data-on] .a-look__ring {
+  opacity: 1;
+  scale: 1.2;
+  transition-delay: 0.45s;
+}
+
+/* Clarity: the muddle fades and the clear page comes through; the second hand runs round. */
+.a-clar__clean {
+  opacity: 0;
+}
+[data-on] .a-clar__mess {
+  opacity: 0.08;
+}
+[data-on] .a-clar__clean {
+  opacity: 1;
+  transition-delay: 0.25s;
+}
+.a-clar__hand {
+  transform-box: view-box;
+  transform-origin: 318px 70px;
+}
+[data-on] .a-clar__hand {
+  rotate: 270deg;
+  transition-duration: 1.2s;
+}
+
+/* Screen: the film runs — the play button gives way, the bar fills, a heart comes up. */
+.a-screen__bar {
+  transform-box: fill-box;
+  transform-origin: 0 50%;
+  scale: 0.08 1;
+}
+.a-screen__heart {
+  opacity: 0;
+  scale: 0.3;
+}
+[data-on] .a-screen__bar {
+  scale: 1;
+  transition-duration: 1.6s;
+  transition-timing-function: linear;
+}
+[data-on] .a-screen__play {
+  opacity: 0;
+  scale: 0.6;
+}
+[data-on] .a-screen__heart {
+  opacity: 1;
+  scale: 1;
+  transition-delay: 0.9s;
+}
+
+/* Door: it swings open on its hinge and the light falls across the floor. */
+.a-door__panel {
+  transform-box: view-box;
+  transform-origin: 148px 160px;
+}
+.a-door__light {
+  opacity: 0;
+}
+[data-on] .a-door__panel {
+  scale: 0.22 1;
+}
+[data-on] .a-door__light {
+  opacity: 0.5;
+  transition-delay: 0.3s;
+}
+
+/* Jar: a heart drops in and the jar fills. */
+.a-jar__level {
+  transform-box: view-box;
+  transform-origin: 200px 276px;
+  scale: 1 0.35;
+}
+[data-on] .a-jar__level {
+  scale: 1 0.95;
+  transition-delay: 0.45s;
+  transition-duration: 1s;
+}
+[data-on] .a-jar__heart {
+  translate: 0 90px;
+  opacity: 0;
+  transition:
+    translate 0.6s cubic-bezier(0.5, 0, 0.9, 0.6),
+    opacity 0.2s ease-in 0.45s;
+}
+
+/* Letter: the flap lifts and the letter rises out. */
+.a-letter__flap {
+  transform-box: view-box;
+  transform-origin: 200px 130px;
+}
+[data-on] .a-letter__flap {
+  scale: 1 -0.75;
+}
+[data-on] .a-letter__card {
+  translate: 0 -70px;
+  transition-delay: 0.3s;
+}
+
+/* Gather: the links reach out and more people arrive. */
+.a-gather__link {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.a-gather__friend {
+  opacity: 0;
+  scale: 0.2;
+}
+.a-scene .a-gather__link,
+.a-scene .a-gather__friend {
+  transition-delay: calc(var(--i) * 0.12s);
+}
+.a-scene .a-gather__link:nth-child(3n + 1) {
+  stroke-dashoffset: 0;
+}
+[data-on] .a-gather__link {
+  stroke-dashoffset: 0;
+}
+[data-on] .a-gather__friend {
+  opacity: 1;
+  scale: 1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-on] .a-look__pin {
+    animation: a-drop 0.7s cubic-bezier(0.3, 0, 0.3, 1);
+  }
+}
+@keyframes a-drop {
+  from {
+    translate: 0 -70px;
+    opacity: 0;
+  }
+  60% {
+    translate: 0 6px;
+    opacity: 1;
+  }
+}
+
+/* ── The supporter's story (components/asraya/Journey.tsx) ──
+   Stacked by default (phones, reduced motion, no JavaScript); on a wide screen it pins and slides sideways. */
+
+.a-journey__frame {
+  position: relative;
+  padding-block: clamp(4.5rem, 12vh, 8.5rem);
+  overflow: hidden;
+}
+.a-journey__track {
+  display: grid;
+  gap: 3.5rem 2.5rem;
+}
+@media (min-width: 640px) {
+  .a-journey__track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .a-journey__track {
+    grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+  }
+}
+.a-journey__intro,
+.a-journey__outro {
+  grid-column: 1 / -1;
+  max-width: 44rem;
+}
+.a-journey__step {
+  display: flex;
+  flex-direction: column;
+}
+.a-journey__num {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--a-accent);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+/* A short rule after the number, in marigold once the step is being read. */
+.a-journey__num::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--a-rule);
+  transition: background-color 0.4s ease-out;
+}
+.a-journey__step[data-on] .a-journey__num::after {
+  background: var(--a-marigold);
+}
+.a-journey__art {
+  max-width: 24rem;
+}
+@media (max-width: 639px) {
+  .a-journey__art {
+    max-width: 18rem;
+    margin-inline: auto;
+  }
+}
+.a-journey__road {
+  display: none;
+}
+
+.a-journey[data-mode="slide"] .a-journey__frame {
+  display: flex;
+  align-items: center;
+  height: 100vh;
+  padding-block: calc(var(--nav-h) + 1.5rem) 3.5rem;
+}
+.a-journey[data-mode="slide"] .a-journey__track {
+  display: flex;
+  align-items: flex-start;
+  gap: 3.5rem;
+  will-change: transform;
+}
+.a-journey[data-mode="slide"] .a-journey__intro {
+  flex: 0 0 min(30rem, 34vw);
+  align-self: center;
+}
+.a-journey[data-mode="slide"] .a-journey__step {
+  flex: 0 0 clamp(18rem, 21vw, 22rem);
+  opacity: 0.55;
+  transition: opacity 0.4s ease-out;
+}
+.a-journey[data-mode="slide"] .a-journey__step[data-on] {
+  opacity: 1;
+}
+/* Without a closing line, room after the last step so it, too, reaches the middle and plays. */
+.a-journey--open[data-mode="slide"] .a-journey__track::after {
+  content: "";
+  flex: 0 0 22vw;
+  /* An empty box would not count towards the track's width. */
+  height: 1px;
+}
+.a-journey[data-mode="slide"] .a-journey__outro {
+  flex: 0 0 min(30rem, 34vw);
+  align-self: center;
+}
+.a-journey[data-mode="slide"] .a-journey__road {
+  display: block;
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: -2rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--a-rule);
+}
+.a-journey__road span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--a-marigold);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+}
+
+/* ── Valora ───────────────────────────────────────────────── */
+/* Valora's design language (owner's choice, 2026-11-04: "Night & gold", the chapter radar's own world): night pages,
+   raised night panels, gold for every accent and line, ivory type. Cormorant set large for headlines and the spaced
+   VALORA wordmark, a monospace for labels (as on the radar), the site's body face for reading. Drawings are gold line
+   work (components/valora/art.tsx). Scoped to .valora; the shared story pieces (Play, Journey, StoryMotion) read the
+   role tokens set here. */
+.valora {
+  --v-night: #0c1014;
+  --v-panel: #141a1f;
+  --v-panel-2: #1b232a;
+  --v-ivory: #ece5d8;
+  --v-gold: #d2ad64;
+  --v-gold-soft: rgb(210 173 100 / 0.16);
+  --v-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  /* Role tokens read by the shared story components. */
+  --a-fg: var(--v-ivory);
+  --a-soft: rgb(236 229 216 / 0.8);
+  --a-faint: rgb(236 229 216 / 0.64);
+  --a-accent: var(--v-gold);
+  --a-red: var(--v-gold);
+  --a-rule: rgb(226 214 190 / 0.14);
+  --a-sand: var(--v-panel);
+  --a-marigold: var(--v-gold);
+  background: var(--v-night);
+  color: var(--a-fg);
+  color-scheme: dark;
+  overflow-x: clip;
+}
+body:has(.valora),
+body:has(.valora) .backdrop {
+  background: #0c1014;
+}
+/* The radar keeps its own layout under the Valora masthead, without repeating the masthead's swan and back link. */
+.valora .vradar {
+  padding-top: 0;
+}
+.valora .vradar .brand,
+.valora .vradar a[data-site] {
+  display: none;
+}
+
+.v-band--panel {
+  background:
+    radial-gradient(110% 90% at 85% 0%, var(--v-panel-2), transparent 60%),
+    var(--v-panel);
+}
+
+/* ── Type ── */
+
+.v-wordmark {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 600;
+  line-height: 0.9;
+  letter-spacing: 0.24em;
+  margin-right: -0.24em;
+  color: var(--v-ivory);
+}
+.valora .a-display {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 600;
+  text-transform: none;
+  line-height: 1;
+  letter-spacing: -0.012em;
+}
+.valora .a-h1 {
+  font-size: clamp(3.2rem, 8.6vw, 7.4rem);
+}
+.valora .a-h2 {
+  font-size: clamp(2.5rem, 5.4vw, 4.8rem);
+}
+.valora .a-em {
+  font-weight: 500;
+}
+.valora :is(.a-lead, .a-quote, .a-serif, .a-journey__num) {
+  font-family: var(--font-cormorant), Georgia, serif;
+}
+.valora .a-lead {
+  font-size: clamp(1.55rem, 2.4vw, 2.15rem);
+  line-height: 1.25;
+}
+.valora .a-quote {
+  font-size: clamp(1.9rem, 3.3vw, 2.9rem);
+}
+.valora .a-wide {
+  font-family: var(--v-mono);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+}
+.valora .a-body {
+  color: var(--a-soft);
+}
+.valora .a-title {
+  color: var(--a-fg);
+}
+
+/* ── Surfaces ── */
+
+.valora .a-card {
+  background: var(--v-panel);
+  border: 1px solid var(--a-rule);
+}
+.v-band--panel .a-card {
+  background: var(--v-night);
+}
+@media (hover: hover) {
+  .valora a.a-card:hover,
+  .valora .a-card--lift:hover {
+    border-color: rgb(210 173 100 / 0.45);
+    box-shadow: 0 24px 50px -30px rgb(210 173 100 / 0.35);
+  }
+}
+.valora .a-tags > li {
+  background: var(--v-panel);
+  border: 1px solid var(--a-rule);
+  color: var(--a-fg);
+}
+.v-band--panel .a-tags > li {
+  background: var(--v-night);
+}
+
+/* Buttons: glass on night, gold for the primary. */
+.valora .btn {
+  --btn-ink: var(--v-ivory);
+  --btn-ink-hover: #ffffff;
+  --btn-face: linear-gradient(180deg, rgb(255 255 255 / 0.09), rgb(255 255 255 / 0.02));
+  --btn-shadows: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 10px 22px -10px rgb(0 0 0 / 0.8);
+  --btn-pressed: inset 0 2px 5px rgb(0 0 0 / 0.4);
+}
+.valora .btn-primary {
+  --btn-ink: #0c1014;
+  --btn-ink-hover: #0c1014;
+  --btn-face: linear-gradient(180deg, #e3c27e, #c49a4c);
+  --btn-shadows: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 14px 30px -14px rgb(210 173 100 / 0.6);
+}
+.valora :focus-visible {
+  outline-color: var(--v-gold);
+}
+
+/* The masthead's pages. */
+.v-subnav a[aria-current] {
+  color: var(--v-ivory);
+}
+.v-subnav li a {
+  color: var(--a-faint);
+  border-bottom: 1px solid transparent;
+  padding-bottom: 0.3rem;
+  transition:
+    color 0.2s ease-out,
+    border-color 0.2s ease-out;
+}
+@media (hover: hover) {
+  .v-subnav li a:hover {
+    color: var(--v-ivory);
+  }
+}
+.v-subnav li a[aria-current="page"] {
+  border-color: var(--v-gold);
+}
+
+/* "What Valora is not": each word struck through in gold; hovering presses the line home. */
+.v-not__word span {
+  background: linear-gradient(var(--v-gold), var(--v-gold)) no-repeat 0 58% / 100% 2px;
+  transition:
+    background-size 0.4s ease-out,
+    color 0.3s ease-out;
+}
+@media (hover: hover) {
+  .v-not:hover .v-not__word span {
+    background-size: 100% 4px;
+    color: var(--a-faint);
+  }
+}
+
+/* Lists */
+.v-roles {
+  display: grid;
+  gap: 0 2rem;
+}
+@media (min-width: 640px) {
+  .v-roles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.v-roles > li {
+  display: flex;
+  gap: 0.9rem;
+  align-items: baseline;
+  border-top: 1px solid var(--a-rule);
+  padding-block: 0.95rem;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.v-roles .a-red {
+  font-family: var(--v-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.v-flow {
+  display: grid;
+  gap: 0.6rem;
+}
+.v-flow > li {
+  display: flex;
+  align-items: baseline;
+  gap: 1.1rem;
+  border-bottom: 1px solid var(--a-rule);
+  padding-block: 0.7rem;
+}
+.v-flow__num {
+  font-family: var(--v-mono);
+  font-size: 0.75rem;
+  color: var(--v-gold);
+}
+.v-flow__title {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(1.6rem, 2.4vw, 2rem);
+  line-height: 1.1;
+}
+.v-flow > li:last-child .v-flow__title {
+  color: var(--v-gold);
+  font-style: italic;
+}
+
+.v-icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  color: var(--v-gold);
+}
+.v-icon .v-f-gold {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: scale 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (hover: hover) {
+  .a-card:hover .v-icon .v-f-gold {
+    scale: 1.4;
+  }
+}
+
+/* ── The ecosystem wheel (components/valora/EcosystemWheel.tsx) ── */
+
+.v-wheel {
+  --r: 40cqi;
+  container-type: inline-size;
+  position: relative;
+  width: min(100%, 42rem);
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+.v-wheel__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: rgb(226 214 190 / 0.2);
+  stroke-width: 0.6;
+}
+.v-wheel__marker {
+  stroke: var(--v-gold);
+  stroke-width: 0.8;
+  transform-origin: 100px 100px;
+  rotate: var(--turn);
+  transition: rotate 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.v-wheel__marker circle {
+  fill: var(--v-gold);
+}
+.v-wheel__items > li {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(calc(var(--k) * 360deg / var(--n))) translateY(calc(-1 * var(--r))) rotate(calc(var(--k) * -360deg / var(--n)));
+}
+.v-wheel__items button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid var(--a-rule);
+  background: var(--v-night);
+  padding: 0.6rem 1.05rem;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--a-fg);
+  cursor: pointer;
+  transition:
+    border-color 0.25s ease-out,
+    background-color 0.25s ease-out,
+    color 0.25s ease-out,
+    scale 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.v-wheel__items button[aria-pressed="true"] {
+  border-color: var(--v-gold);
+  background: var(--v-gold);
+  color: var(--v-night);
+  scale: 1.06;
+}
+.v-wheel__num {
+  font-family: var(--v-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--v-gold);
+}
+.v-wheel__items button[aria-pressed="true"] .v-wheel__num {
+  color: var(--v-night);
+}
+.v-wheel__centre {
+  position: absolute;
+  inset: 26%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+.v-wheel__panel {
+  grid-area: 1 / 1;
+  opacity: 0;
+  visibility: hidden;
+  translate: 0 8px;
+  transition:
+    opacity 0.35s ease-out,
+    translate 0.35s ease-out,
+    visibility 0s linear 0.35s;
+}
+.v-wheel__panel[data-active] {
+  opacity: 1;
+  visibility: visible;
+  translate: 0 0;
+  transition-delay: 0s;
+}
+.v-wheel__title {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(2.2rem, 7cqi, 3.4rem);
+  line-height: 1;
+  color: var(--v-gold);
+}
+.v-wheel__body {
+  margin-top: 0.8rem;
+  font-family: var(--font-sans);
+  font-size: clamp(0.92rem, 2.6cqi, 1.08rem);
+  line-height: 1.55;
+  color: var(--a-soft);
+}
+/* Phones: the centre on top, the parts as a grid of buttons under it. */
+@media (max-width: 639px) {
+  .v-wheel {
+    aspect-ratio: auto;
+    container-type: normal;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .v-wheel__ring {
+    display: none;
+  }
+  .v-wheel__centre {
+    position: relative;
+    inset: auto;
+    order: -1;
+    min-height: 9.5rem;
+    border: 1px solid var(--a-rule);
+    border-radius: 1.25rem;
+    padding: 1.4rem;
+    background: var(--v-night);
+  }
+  .v-wheel__title {
+    font-size: 2.4rem;
+  }
+  .v-wheel__items {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  .v-wheel__items > li {
+    position: static;
+    transform: none;
+  }
+  .v-wheel__items button {
+    width: 100%;
+  }
+}
+
+/* ── The ladder (components/valora/Ladder.tsx) ── */
+
+.v-ladder {
+  --h: 4.1rem;
+  --gap: 0.55rem;
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  gap: 1.25rem;
+}
+.v-ladder__rail {
+  position: relative;
+}
+.v-ladder__rail::before,
+.v-ladder__lit {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 2px;
+  translate: -50% 0;
+  border-radius: 2px;
+}
+.v-ladder__rail::before {
+  top: calc(var(--h) / 2);
+  bottom: calc(var(--h) / 2);
+  background: var(--a-rule);
+}
+.v-ladder__lit {
+  bottom: calc(var(--h) / 2);
+  height: calc((var(--h) + var(--gap)) * var(--rung));
+  background: var(--v-gold);
+  transition: height 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.v-ladder__climber {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--h) / 2 + (var(--h) + var(--gap)) * var(--rung));
+  width: 1.15rem;
+  height: 1.15rem;
+  translate: -50% 50%;
+  border-radius: 999px;
+  background: var(--v-gold);
+  box-shadow: 0 0 0 6px rgb(210 173 100 / 0.18), 0 0 24px rgb(210 173 100 / 0.6);
+  transition: bottom 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.v-ladder__rungs {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--gap);
+}
+.v-ladder__rungs button {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  min-height: var(--h);
+  border-radius: 1rem;
+  border: 1px solid var(--a-rule);
+  background: var(--v-night);
+  padding: 0.6rem 1.2rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.25s ease-out,
+    background-color 0.25s ease-out;
+}
+.v-ladder__num {
+  font-family: var(--v-mono);
+  font-size: 0.72rem;
+  color: var(--a-faint);
+}
+.v-ladder__title {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(1.4rem, 2vw, 1.75rem);
+  line-height: 1.1;
+  color: var(--a-faint);
+  transition: color 0.25s ease-out;
+}
+.v-ladder__rungs button[data-reached] {
+  border-color: rgb(210 173 100 / 0.3);
+}
+.v-ladder__rungs button[data-reached] .v-ladder__num {
+  color: var(--v-gold);
+}
+.v-ladder__rungs button[data-reached] .v-ladder__title {
+  color: var(--v-ivory);
+}
+.v-ladder__rungs button[aria-pressed="true"] {
+  border-color: var(--v-gold);
+  background: var(--v-gold-soft);
+}
+.v-ladder__rungs button[aria-pressed="true"] .v-ladder__title {
+  color: var(--v-gold);
+}
+
+/* ── Valora drawings (components/valora/art.tsx) ── */
+
+.v-f-panel {
+  fill: var(--v-panel);
+}
+.v-band--panel .v-f-panel {
+  fill: var(--v-panel-2);
+}
+.v-f-night {
+  fill: var(--v-night);
+}
+.v-f-gold {
+  fill: var(--v-gold);
+}
+.v-f-soft {
+  fill: var(--v-gold-soft);
+}
+.v-f-ivory {
+  fill: var(--v-ivory);
+}
+
+.v-plate :is(.v-link, .v-halo, .v-plank, .v-rays, .v-page, .v-rise, .v-drop, .v-spot, .v-badge, .v-join, .v-climb, .v-pop,
+  .v-arrow, .v-near, .v-glow, .v-bulb, .v-launch, .v-tile, .v-node, .v-fan) {
+  transition:
+    translate 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    rotate 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    scale 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.5s ease-out,
+    fill 0.5s ease-out;
+}
+.v-plate :is(.v-rise, .v-badge, .v-join, .v-pop, .v-gear, .v-halo) {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Lines: faint at rest, drawn in when played. */
+.v-link {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  opacity: 0.3;
+}
+[data-on] .v-link {
+  opacity: 1;
+}
+.v-link--main {
+  opacity: 0.45;
+}
+
+/* Constellation: campuses ring when played; every point twinkles a little. */
+.v-halo {
+  opacity: 0.35;
+}
+
+/* Bridge: missing at rest — that is the gap — and built plank by plank. */
+.v-plank {
+  opacity: 0;
+  translate: 0 -24px;
+}
+[data-on] .v-plank {
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: calc(var(--i) * 80ms);
+}
+
+/* Learn */
+.v-rays {
+  opacity: 0.3;
+  scale: 0.85;
+  transform-box: view-box;
+  transform-origin: 200px 150px;
+}
+[data-on] .v-rays {
+  opacity: 1;
+  scale: 1;
+}
+.v-page {
+  transform-box: view-box;
+  transform-origin: 200px 210px;
+}
+[data-on] .v-page {
+  scale: -1 1;
+}
+[data-on] .v-rise {
+  translate: 0 -16px;
+  scale: 1.25;
+}
+[data-on] .v-rise--late {
+  transition-delay: 0.3s;
+}
+
+/* Build: the last blocks wait above and come down. */
+.v-drop {
+  opacity: 0;
+  translate: 0 -70px;
+}
+[data-on] .v-drop {
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: calc(var(--i) * 0.2s + 0.1s);
+}
+
+/* Showcase */
+.v-spot {
+  opacity: 0;
+}
+.v-badge {
+  scale: 0;
+}
+[data-on] .v-spot {
+  opacity: 1;
+}
+[data-on] .v-badge {
+  scale: 1;
+  transition-delay: calc(var(--i) * 0.12s + 0.3s);
+}
+
+/* Connect, Feedback */
+.v-join {
+  opacity: 0;
+  scale: 0.3;
+}
+[data-on] .v-join {
+  opacity: 1;
+  scale: 1;
+  transition-delay: calc(var(--i) * 0.12s + 0.35s);
+}
+
+/* Grow: the student climbs, step by step. */
+[data-on] .v-climb {
+  translate: 240px -160px;
+}
+
+/* Problem */
+.v-pop {
+  opacity: 0.55;
+  scale: 0.75;
+}
+[data-on] .v-pop {
+  opacity: 1;
+  scale: 1;
+}
+
+/* Challenge: the mark waits off the target and lands. */
+.v-arrow {
+  translate: 50px -50px;
+  opacity: 0.55;
+}
+[data-on] .v-arrow,
+a.a-card:hover .v-arrow {
+  translate: 0 0;
+  opacity: 1;
+}
+
+/* Team */
+[data-on] .v-near--l {
+  translate: 26px 0;
+}
+[data-on] .v-near--r {
+  translate: -26px 0;
+}
+
+/* Solution */
+.v-glow {
+  opacity: 0.12;
+}
+[data-on] .v-glow {
+  opacity: 1;
+}
+[data-on] .v-bulb {
+  fill: rgb(210 173 100 / 0.32);
+}
+
+/* Orbit, Launch (also played by their card's hover) */
+.v-turn {
+  transform-box: view-box;
+  transform-origin: 200px 150px;
+}
+[data-on] .v-launch,
+a.a-card:hover .v-launch {
+  translate: 0 -34px;
+}
+
+/* Profile card: its sections fill one by one. */
+.v-tile {
+  fill: transparent;
+}
+[data-on] .v-tile {
+  fill: var(--v-gold-soft);
+  transition-delay: calc(var(--i) * 90ms);
+}
+[data-on] .v-tile:nth-child(3n) {
+  fill: var(--v-gold);
+}
+
+/* Hub */
+.v-node {
+  fill: var(--v-night);
+}
+[data-on] .v-node {
+  fill: var(--v-gold);
+  transition-delay: calc(var(--i) * 90ms + 0.2s);
+}
+
+/* Evidence: the folder fans out. */
+.v-fan {
+  transform-box: view-box;
+  transform-origin: 200px 240px;
+}
+[data-on] .v-fan {
+  rotate: calc(var(--r) * 1deg);
+  translate: calc(var(--tx) * 1px) 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .v-twinkle {
+    animation: v-twinkle 3.6s ease-in-out calc(var(--i) * -0.7s) infinite alternate;
+  }
+  [data-on] .v-link {
+    animation: v-draw 0.9s ease-out calc(var(--i, 0) * 70ms) both;
+  }
+  [data-on] .v-halo {
+    animation: v-pulse 1.8s ease-out calc(var(--i) * 0.15s) infinite;
+  }
+  [data-on] .v-climb {
+    animation: v-climb 1.4s ease-in-out both;
+  }
+  [data-on] .v-gear {
+    animation: v-spin 3s linear infinite;
+  }
+  [data-on] .v-turn,
+  a.a-card:hover .v-turn {
+    animation: v-spin 14s linear infinite;
+  }
+}
+@keyframes v-twinkle {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes v-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes v-pulse {
+  from {
+    opacity: 0.9;
+    scale: 0.8;
+  }
+  to {
+    opacity: 0;
+    scale: 2.2;
+  }
+}
+@keyframes v-climb {
+  0% {
+    translate: 0 0;
+  }
+  12% {
+    translate: 30px -54px;
+  }
+  25% {
+    translate: 60px -40px;
+  }
+  37% {
+    translate: 90px -94px;
+  }
+  50% {
+    translate: 120px -80px;
+  }
+  62% {
+    translate: 150px -134px;
+  }
+  75% {
+    translate: 180px -120px;
+  }
+  87% {
+    translate: 210px -174px;
+  }
+  100% {
+    translate: 240px -160px;
+  }
+}
+@keyframes v-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* On Valora's night pages the footer's sky is dusk, not day: it rises out of the night to a gold horizon over the hills. */
+body:has(.valora) .ft-sky__glow {
+  background: linear-gradient(
+    to bottom,
+    #0c1014 0%,
+    #121419 22%,
+    #241c18 40%,
+    #5a3018 55%,
+    #b0662b 66%,
+    #d9a04e 72%,
+    #8d3a22 82%,
+    #3c0b12 90%,
+    var(--ft-ground) 97%
+  );
+}
+
+/* ── Aurelius drawings (components/aurelius/art.tsx) ──
+   Maroon line work with cream and polished-gold fills. The playable scenes use the shared <Play>, which reads these role
+   tokens; the small marks play when their card is hovered. */
+.theme-aurelius {
+  --a-fg: var(--au-maroon-900);
+  --a-faint: #6e4a44;
+  --a-accent: var(--au-gold-ink);
+  --a-marigold: var(--au-gold-500);
+  --a-rule: rgb(94 26 23 / 0.14);
+}
+.au-f-cream {
+  fill: var(--au-cream-50);
+}
+.au-f-sand {
+  fill: var(--au-cream-200);
+}
+.au-f-maroon {
+  fill: var(--au-maroon-700);
+}
+.au-f-gold {
+  fill: url(#au-metal);
+}
+.au-f-shadow {
+  fill: rgb(94 26 23 / 0.12);
+}
+.au-f-glass {
+  fill: rgb(247 227 161 / 0.35);
+}
+
+.au-art :is(.au-beam, .au-pan, .au-pivot, .au-glint, .au-old, .au-new, .au-turn, .au-lens, .au-ink, .au-quill, .au-letter, .au-flap,
+  .au-seal, .au-env) {
+  transition:
+    translate 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+    rotate 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+    scale 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.5s ease-out,
+    stroke-dashoffset 0.9s ease-out;
+}
+.au-art :is(.au-pivot, .au-glint, .au-turn, .au-seal) {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+[data-on] .au-glint {
+  scale: 1.35;
+  rotate: 45deg;
+}
+
+/* Balance: leaning to creative at rest, level when played; the pointer tips it. The pans hang from the beam's ends. */
+@property --au-tilt {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 0deg;
+}
+.au-balance {
+  --au-tilt: calc(-9deg + var(--px, 0) * 5deg);
+  transition: --au-tilt 0.9s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+[data-on] .au-balance {
+  --au-tilt: calc(var(--px, 0) * 3deg);
+}
+.au-beam {
+  transform-box: view-box;
+  transform-origin: 200px 85px;
+  rotate: var(--au-tilt);
+  transition: none !important;
+}
+.au-pan--l {
+  translate: 0 calc(sin(var(--au-tilt)) * -130px);
+  transition: none !important;
+}
+.au-pan--r {
+  translate: 0 calc(sin(var(--au-tilt)) * 130px);
+  transition: none !important;
+}
+[data-on] .au-pivot {
+  scale: 1.2;
+}
+
+/* Gears: played, all four turn, each at its own speed and way round. */
+.au-gear {
+  transform-box: view-box;
+}
+
+/* Redirect: the lens slides to the turning point, the old path fades, the new one is drawn in gold. */
+.au-new {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+[data-on] .au-new {
+  stroke-dashoffset: 0;
+  transition-delay: 0.45s;
+}
+[data-on] .au-old {
+  opacity: 0.2;
+}
+[data-on] .au-lens {
+  translate: 104px 60px;
+}
+[data-on] .au-turn {
+  scale: 1.5;
+}
+
+/* Quill: the line is inked as the quill crosses the page. */
+.au-ink {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+[data-on] .au-ink {
+  stroke-dashoffset: 0;
+  transition-duration: 1.3s;
+  transition-timing-function: linear;
+}
+[data-on] .au-quill {
+  translate: 150px -4px;
+  transition-duration: 1.3s;
+  transition-timing-function: linear;
+}
+
+/* Envelope: the letter goes in, the flap closes, the seal is set, and it lifts a little, ready to go. */
+.au-letter {
+  translate: 0 -10px;
+}
+.au-flap {
+  transform-box: view-box;
+  transform-origin: 200px 140px;
+  scale: 1 -1;
+}
+.au-seal {
+  opacity: 0;
+  scale: 0.4;
+}
+[data-on] .au-letter {
+  translate: 0 70px;
+  opacity: 0;
+  transition:
+    translate 0.6s cubic-bezier(0.5, 0, 0.7, 1),
+    opacity 0.2s linear 0.45s;
+}
+[data-on] .au-flap {
+  scale: 1 1;
+  transition-delay: 0.45s;
+}
+[data-on] .au-seal {
+  opacity: 1;
+  scale: 1;
+  transition-delay: 0.85s;
+}
+[data-on] .au-env {
+  translate: 0 -10px;
+  transition-delay: 1s;
+}
+
+/* Small marks: they play on their own in view, and on their card's hover (and focus, for the venture links). */
+.au-mark {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.au-mark :is(.au-key, .au-coin, .au-heart, .au-leaves, .au-star, .au-toss, .au-reel, .au-orbits) {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    translate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+    rotate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+    scale 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.au-key {
+  transform-origin: 30% 50%;
+}
+:is(.au-mode:hover, [data-on]) .au-key {
+  rotate: -90deg;
+}
+.au-coin {
+  translate: 0 -6px;
+}
+:is(.au-mode:hover, [data-on]) .au-coin {
+  translate: 0 24px;
+  scale: 0.9;
+}
+.au-leaves {
+  transform-origin: 50% 100%;
+}
+:is(.au-venture:hover, .au-venture:focus-visible, [data-on]) .au-leaves {
+  rotate: calc(var(--side) * -8deg);
+}
+:is(.au-venture:hover, .au-venture:focus-visible, [data-on]) .au-star {
+  rotate: 90deg;
+  scale: 1.15;
+}
+:is(.au-venture:hover, .au-venture:focus-visible, [data-on]) .au-toss {
+  translate: 0 -10px;
+  rotate: -12deg;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-on] .au-gear {
+    animation: au-spin calc(var(--ratio) * 9s) linear infinite;
+  }
+  [data-on] .au-gear--rev {
+    animation-direction: reverse;
+  }
+  :is(.au-mode:hover, [data-on]) .au-heart {
+    animation: au-beat 0.9s ease-in-out infinite;
+  }
+  :is(.au-venture:hover, .au-venture:focus-visible, [data-on]) .au-reel {
+    animation: au-spin 2.4s linear infinite;
+  }
+  :is(.au-venture:hover, .au-venture:focus-visible, [data-on]) .au-orbits {
+    animation: au-spin 6s linear infinite;
+  }
+  :is(.au-venture:hover, .au-venture:focus-visible, [data-on]) .au-wave {
+    animation: au-pulse 1.2s ease-out calc(var(--i) * 0.15s) infinite;
+  }
+}
+@keyframes au-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes au-beat {
+  0%,
+  100% {
+    scale: 1;
+  }
+  30% {
+    scale: 1.18;
+  }
+  50% {
+    scale: 0.96;
+  }
+}
+@keyframes au-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
